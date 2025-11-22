@@ -1,0 +1,225 @@
+// API Service - Handles all backend API calls
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+
+// Helper function to get auth token from localStorage
+const getAuthToken = () => {
+  return localStorage.getItem("authToken");
+};
+
+// Helper function to get API key from localStorage
+const getApiKey = () => {
+  return localStorage.getItem("apiKey");
+};
+
+// Generic fetch wrapper
+const apiRequest = async (endpoint, options = {}) => {
+  const token = getAuthToken();
+  const apiKey = getApiKey();
+
+  const headers = {
+    "Content-Type": "application/json",
+    ...options.headers,
+  };
+
+  // Add authentication
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  } else if (apiKey) {
+    headers["x-api-key"] = apiKey;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "An error occurred");
+    }
+
+    return data;
+  } catch (error) {
+    console.error("API Error:", error);
+    throw error;
+  }
+};
+
+// Authentication APIs
+export const authAPI = {
+  register: async (email, password, name) => {
+    return apiRequest("/api/auth/register", {
+      method: "POST",
+      body: JSON.stringify({ email, password, name }),
+    });
+  },
+
+  login: async (email, password) => {
+    return apiRequest("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    });
+  },
+
+  getMe: async () => {
+    return apiRequest("/api/auth/me");
+  },
+};
+
+// Agent Management APIs
+export const agentAPI = {
+  list: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiRequest(`/api/dashboard/agents?${queryString}`);
+  },
+
+  getById: async (agentId) => {
+    return apiRequest(`/api/dashboard/agent-info/${agentId}`);
+  },
+
+  create: async (agentData) => {
+    return apiRequest("/api/dashboard/agents", {
+      method: "POST",
+      body: JSON.stringify(agentData),
+    });
+  },
+
+  update: async (agentId, agentData) => {
+    return apiRequest(`/api/dashboard/agents/${agentId}`, {
+      method: "PUT",
+      body: JSON.stringify(agentData),
+    });
+  },
+
+  delete: async (agentId) => {
+    return apiRequest(`/api/dashboard/agents/${agentId}`, {
+      method: "DELETE",
+    });
+  },
+
+  sync: async () => {
+    return apiRequest("/api/dashboard/sync-agents", {
+      method: "POST",
+    });
+  },
+};
+
+// Call Management APIs
+export const callAPI = {
+  list: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiRequest(`/api/dashboard/calls?${queryString}`);
+  },
+
+  getById: async (callId) => {
+    return apiRequest(`/api/dashboard/calls/${callId}`);
+  },
+
+  getHistory: async (agentId, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiRequest(`/api/dashboard/call-history/${agentId}?${queryString}`);
+  },
+
+  getAllHistory: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiRequest(`/api/dashboard/call-history?${queryString}`);
+  },
+
+  sync: async (days = 30, agentId = null) => {
+    return apiRequest("/api/dashboard/sync-calls", {
+      method: "POST",
+      body: JSON.stringify({ days, agentId }),
+    });
+  },
+
+  search: async (query, params = {}) => {
+    const queryString = new URLSearchParams({ query, ...params }).toString();
+    return apiRequest(`/api/dashboard/search/calls?${queryString}`);
+  },
+};
+
+// Analytics APIs
+export const analyticsAPI = {
+  getOverview: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiRequest(`/api/dashboard/analytics/overview?${queryString}`);
+  },
+
+  getAgents: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiRequest(`/api/dashboard/analytics/agents?${queryString}`);
+  },
+
+  getCalls: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiRequest(`/api/dashboard/analytics/calls?${queryString}`);
+  },
+
+  getSentiment: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiRequest(`/api/dashboard/analytics/sentiment?${queryString}`);
+  },
+};
+
+// User Management APIs (Admin only)
+export const userAPI = {
+  list: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiRequest(`/api/dashboard/users?${queryString}`);
+  },
+
+  getById: async (userId) => {
+    return apiRequest(`/api/dashboard/users/${userId}`);
+  },
+
+  update: async (userId, userData) => {
+    return apiRequest(`/api/dashboard/users/${userId}`, {
+      method: "PUT",
+      body: JSON.stringify(userData),
+    });
+  },
+
+  delete: async (userId) => {
+    return apiRequest(`/api/dashboard/users/${userId}`, {
+      method: "DELETE",
+    });
+  },
+};
+
+// Utility APIs
+export const utilityAPI = {
+  getStats: async () => {
+    return apiRequest("/api/dashboard/stats");
+  },
+
+  getSyncStatus: async () => {
+    return apiRequest("/api/dashboard/sync-status");
+  },
+};
+
+// Search APIs
+export const searchAPI = {
+  searchCalls: async (query, params = {}) => {
+    const queryString = new URLSearchParams({ query, ...params }).toString();
+    return apiRequest(`/api/dashboard/search/calls?${queryString}`);
+  },
+
+  searchAgents: async (query, params = {}) => {
+    const queryString = new URLSearchParams({ query, ...params }).toString();
+    return apiRequest(`/api/dashboard/search/agents?${queryString}`);
+  },
+};
+
+export default {
+  auth: authAPI,
+  agent: agentAPI,
+  call: callAPI,
+  analytics: analyticsAPI,
+  user: userAPI,
+  utility: utilityAPI,
+  search: searchAPI,
+};

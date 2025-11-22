@@ -1,0 +1,10 @@
+<svg width="440" height="60" viewBox="0 0 440 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Diamond shapes -->
+  <path d="M22 0L44 30L22 60L0 30L22 0Z" fill="#1E3A8A"/>
+  <path d="M54 0L76 30L54 60L32 30L54 0Z" fill="#3B82F6"/>
+  <path d="M86 0L108 30L86 60L64 30L86 0Z" fill="#F97316"/>
+  
+  <!-- AI Vox Agency text -->
+  <text x="120" y="45" font-family="Arial, sans-serif" font-weight="bold" font-size="36" fill="#000000">AI Vox Agency</text>
+</svg>
+
