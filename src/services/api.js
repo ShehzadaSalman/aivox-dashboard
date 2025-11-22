@@ -5,12 +5,18 @@ const API_BASE_URL =
 
 // Helper function to get auth token from localStorage
 const getAuthToken = () => {
-  return localStorage.getItem("authToken");
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem("authToken");
+  }
+  return null;
 };
 
 // Helper function to get API key from localStorage
 const getApiKey = () => {
-  return localStorage.getItem("apiKey");
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem("apiKey");
+  }
+  return null;
 };
 
 // Generic fetch wrapper

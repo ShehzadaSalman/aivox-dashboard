@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { authAPI } from '../services/api';
 
 const AuthContext = createContext(null);
@@ -6,7 +6,28 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [token, setToken] = useState(localStorage.getItem('authToken'));
+  const [token, setToken] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('authToken');
+    }
+    return null;
+  });
+
+  const fetchUser = useCallback(async () => {
+    try {
+      const response = await authAPI.getMe();
+      setUser(response.data);
+    } catch (error) {
+      // Token might be invalid, clear it
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('authToken');
+      }
+      setToken(null);
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     // Check if user is already logged in
@@ -15,27 +36,15 @@ export const AuthProvider = ({ children }) => {
     } else {
       setLoading(false);
     }
-  }, [token]);
-
-  const fetchUser = async () => {
-    try {
-      const response = await authAPI.getMe();
-      setUser(response.data);
-    } catch (error) {
-      // Token might be invalid, clear it
-      localStorage.removeItem('authToken');
-      setToken(null);
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [token, fetchUser]);
 
   const login = async (email, password) => {
     try {
       const response = await authAPI.login(email, password);
       if (response.success && response.token) {
-        localStorage.setItem('authToken', response.token);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('authToken', response.token);
+        }
         setToken(response.token);
         await fetchUser();
         return { success: true };
@@ -50,7 +59,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await authAPI.register(email, password, name);
       if (response.success && response.token) {
-        localStorage.setItem('authToken', response.token);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('authToken', response.token);
+        }
         setToken(response.token);
         await fetchUser();
         return { success: true };
@@ -62,7 +73,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('authToken');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('authToken');
+    }
     setToken(null);
     setUser(null);
   };
