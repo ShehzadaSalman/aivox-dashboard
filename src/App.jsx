@@ -12,6 +12,10 @@ import ErrorBoundary from "./components/ErrorBoundary";
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
 
+  console.log("Just testing the console log");
+  console.log("Just testing the console log");
+  console.log("Just testing the console log");
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -31,11 +35,7 @@ function AppRoutes() {
       <Route
         path="/login"
         element={
-          isAuthenticated ? (
-            <Navigate to="/dashboard" replace />
-          ) : (
-            <Login />
-          )
+          isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
         }
       />
       <Route
