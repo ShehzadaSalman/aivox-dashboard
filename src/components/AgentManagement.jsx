@@ -25,6 +25,7 @@ function AgentManagement() {
         ...(filters.search && { search: filters.search }),
       };
       const response = await agentAPI.list(params);
+      console.log('Agents data:', response.data.agents);
       setAgents(response.data.agents);
       setPagination(response.data.pagination);
     } catch (err) {
@@ -357,5 +358,4 @@ function AgentModal({ agent, onClose, onSave }) {
 }
 
 export default AgentManagement;
-
 

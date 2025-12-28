@@ -1,11 +1,18 @@
 import { useState, useEffect } from 'react';
-import { utilityAPI, analyticsAPI } from '../services/api';
+import { utilityAPI, analyticsAPI, agentAPI, callAPI } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 function DashboardOverview() {
+  const { isAdmin } = useAuth();
   const [stats, setStats] = useState(null);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [syncing, setSyncing] = useState(false);
+  const totalCostCents = analytics?.totalCost ?? stats?.cost?.total ?? 0;
+  const avgCostCents = analytics?.avgCost ?? 0;
+  const totalCostDollars = totalCostCents / 100;
+  const avgCostDollars = avgCostCents / 100;
 
   useEffect(() => {
     fetchData();
@@ -27,6 +34,25 @@ function DashboardOverview() {
     }
   };
 
+  const handleFullSync = async () => {
+    const days = parseInt(prompt('How many days to sync calls? (1-365)', '365') || '365');
+    if (isNaN(days) || days < 1 || days > 365) {
+      alert('Please enter a number between 1 and 365');
+      return;
+    }
+    try {
+      setSyncing(true);
+      await agentAPI.sync();
+      await callAPI.sync(days);
+      await fetchData();
+      alert('Agents and calls synced successfully!');
+    } catch (err) {
+      alert(`Sync failed: ${err.message}`);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -45,9 +71,20 @@ function DashboardOverview() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard Overview</h1>
-        <p className="text-gray-600">Welcome to your AI Receptionist Dashboard</p>
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard Overview</h1>
+          <p className="text-gray-600">Welcome to your AI Receptionist Dashboard</p>
+        </div>
+        {isAdmin() && (
+          <button
+            onClick={handleFullSync}
+            disabled={syncing}
+            className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+          >
+            {syncing ? 'Syncing...' : 'Sync Agents & Calls'}
+          </button>
+        )}
       </div>
 
       {/* Stats Cards */}
@@ -68,8 +105,8 @@ function DashboardOverview() {
         />
         <StatCard
           title="Total Cost"
-          value={`$${(analytics?.totalCost || stats?.cost?.total || 0).toFixed(2)}`}
-          subtitle={`Avg: $${(analytics?.avgCost || 0).toFixed(2)}`}
+          value={`$${totalCostDollars.toFixed(2)}`}
+          subtitle={`Avg: $${avgCostDollars.toFixed(2)}`}
           icon="💰"
           color="purple"
         />
@@ -112,11 +149,11 @@ function DashboardOverview() {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Total Cost</span>
-                <span className="font-semibold">${analytics.totalCost.toFixed(2)}</span>
+                <span className="font-semibold">${totalCostDollars.toFixed(2)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Average Cost per Call</span>
-                <span className="font-semibold">${analytics.avgCost.toFixed(2)}</span>
+                <span className="font-semibold">${avgCostDollars.toFixed(2)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Total Duration</span>
@@ -169,5 +206,3 @@ function StatCard({ title, value, subtitle, icon, color }) {
 }
 
 export default DashboardOverview;
-
-

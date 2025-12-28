@@ -7,6 +7,7 @@ function Login() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const { login, register } = useAuth();
@@ -15,6 +16,7 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setNotice("");
     setLoading(true);
 
     try {
@@ -31,7 +33,14 @@ function Login() {
       }
 
       if (result.success) {
-        navigate("/dashboard");
+        if (result.pending) {
+          setNotice(result.message || "Your account is pending approval.");
+          setIsRegistering(false);
+          setName("");
+          setPassword("");
+        } else {
+          navigate("/dashboard");
+        }
       } else {
         setError(result.error || "Authentication failed");
       }
@@ -117,6 +126,11 @@ function Login() {
           {error && (
             <div className="text-red-500 text-sm text-center bg-red-50 p-3 rounded-lg">
               {error}
+            </div>
+          )}
+          {notice && (
+            <div className="text-emerald-600 text-sm text-center bg-emerald-50 p-3 rounded-lg">
+              {notice}
             </div>
           )}
 

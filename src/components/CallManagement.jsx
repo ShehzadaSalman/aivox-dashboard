@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { callAPI, agentAPI } from '../services/api';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 function CallManagement() {
+  const { isSuperAdmin } = useAuth();
   const [calls, setCalls] = useState([]);
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -62,7 +64,7 @@ function CallManagement() {
     }
     try {
       setSyncing(true);
-      await callAPI.sync(days, filters.agentId || null);
+      await callAPI.sync(days, filters.agentId || undefined);
       await fetchCalls();
       alert('Calls synced successfully!');
     } catch (err) {
@@ -89,13 +91,19 @@ function CallManagement() {
           <h1 className="text-3xl font-bold text-gray-900">Call Management</h1>
           <p className="text-gray-600 mt-1">View and manage all calls</p>
         </div>
-        <button
-          onClick={handleSync}
-          disabled={syncing}
-          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-        >
-          {syncing ? 'Syncing...' : 'Sync Calls'}
-        </button>
+        {isSuperAdmin() ? (
+          <button
+            onClick={handleSync}
+            disabled={syncing}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+          >
+            {syncing ? 'Syncing...' : 'Sync Calls'}
+          </button>
+        ) : (
+          <div className="text-sm text-gray-500">
+            Syncing calls is restricted to superadmin.
+          </div>
+        )}
       </div>
 
       {/* Filters */}
@@ -274,6 +282,24 @@ function CallDetailsModal({ call, onClose }) {
     return `${mins}m ${secs}s`;
   };
 
+  const formatTranscriptLines = (transcript) => {
+    if (!transcript) {
+      return [];
+    }
+
+    return transcript
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .flatMap((line) =>
+        line.split(/(?=\b(?:Agent|User|Customer|Caller)\s*:)/gi)
+      )
+      .map((line) => line.trim())
+      .filter(Boolean);
+  };
+
+  const transcriptLines = formatTranscriptLines(call.transcript);
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -328,23 +354,44 @@ function CallDetailsModal({ call, onClose }) {
                   <span className="font-medium">Disconnection:</span> {call.disconnection_reason}
                 </div>
               )}
-              {call.recording_url && (
-                <div>
-                  <span className="font-medium">Recording:</span>{' '}
-                  <a href={call.recording_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                    Listen
-                  </a>
-                </div>
-              )}
             </div>
           </div>
         </div>
+
+        {call.recording_url && (
+          <div className="mt-6">
+            <h3 className="font-semibold text-gray-700 mb-2">Audio</h3>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <audio controls className="w-full sm:flex-1">
+                <source src={call.recording_url} />
+                Your browser does not support the audio element.
+              </audio>
+              <a
+                href={call.recording_url}
+                download
+                className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
+              >
+                Download
+              </a>
+            </div>
+          </div>
+        )}
 
         {call.transcript && (
           <div className="mt-6">
             <h3 className="font-semibold text-gray-700 mb-2">Transcript</h3>
             <div className="bg-gray-50 p-4 rounded-lg text-sm max-h-64 overflow-y-auto">
-              {call.transcript}
+              {transcriptLines.length > 0 ? (
+                <div className="space-y-2">
+                  {transcriptLines.map((line, index) => (
+                    <div key={`${line}-${index}`} className="leading-relaxed">
+                      {line}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="leading-relaxed">{call.transcript}</div>
+              )}
             </div>
           </div>
         )}
@@ -363,5 +410,3 @@ function CallDetailsModal({ call, onClose }) {
 }
 
 export default CallManagement;
-
-

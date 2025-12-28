@@ -136,9 +136,13 @@ export const callAPI = {
   },
 
   sync: async (days = 30, agentId = null) => {
+    const payload = { days };
+    if (agentId) {
+      payload.agentId = agentId;
+    }
     return apiRequest("/api/dashboard/sync-calls", {
       method: "POST",
-      body: JSON.stringify({ days, agentId }),
+      body: JSON.stringify(payload),
     });
   },
 
@@ -192,6 +196,30 @@ export const userAPI = {
   delete: async (userId) => {
     return apiRequest(`/api/dashboard/users/${userId}`, {
       method: "DELETE",
+    });
+  },
+
+  approve: async (userId) => {
+    return apiRequest(`/api/dashboard/users/${userId}/approve`, {
+      method: "POST",
+    });
+  },
+
+  listAgents: async (userId) => {
+    return apiRequest(`/api/dashboard/users/${userId}/agents`);
+  },
+
+  assignAgent: async (userId, agentId) => {
+    return apiRequest("/api/dashboard/assignments", {
+      method: "POST",
+      body: JSON.stringify({ userId, agentId }),
+    });
+  },
+
+  unassignAgent: async (userId, agentId) => {
+    return apiRequest("/api/dashboard/assignments", {
+      method: "DELETE",
+      body: JSON.stringify({ userId, agentId }),
     });
   },
 };

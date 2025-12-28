@@ -58,13 +58,20 @@ export const AuthProvider = ({ children }) => {
   const register = async (email, password, name) => {
     try {
       const response = await authAPI.register(email, password, name);
-      if (response.success && response.token) {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('authToken', response.token);
+      if (response.success) {
+        if (response.token) {
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('authToken', response.token);
+          }
+          setToken(response.token);
+          await fetchUser();
+          return { success: true };
         }
-        setToken(response.token);
-        await fetchUser();
-        return { success: true };
+        return {
+          success: true,
+          pending: true,
+          message: response.message || 'Your account is pending approval.',
+        };
       }
       return { success: false, error: 'Registration failed' };
     } catch (error) {
@@ -81,7 +88,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   const isAdmin = () => {
-    return user?.role === 'ADMIN';
+    return user?.role === 'ADMIN' || user?.role === 'SUPERADMIN';
+  };
+
+  const isSuperAdmin = () => {
+    return user?.role === 'SUPERADMIN';
   };
 
   const value = {
@@ -91,6 +102,7 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     isAdmin,
+    isSuperAdmin,
     isAuthenticated: !!user,
   };
 
@@ -104,5 +116,3 @@ export const useAuth = () => {
   }
   return context;
 };
-
-

@@ -14,7 +14,6 @@ function Dashboard() {
     { path: "/dashboard", label: "Overview", icon: "📊" },
     { path: "/dashboard/agents", label: "Agents", icon: "👥" },
     { path: "/dashboard/calls", label: "Calls", icon: "📞" },
-    { path: "/dashboard/analytics", label: "Analytics", icon: "📈" },
   ];
 
   if (isAdmin()) {
