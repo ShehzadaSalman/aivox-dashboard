@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { mockCallHistory, mockAgents } from "../mockData";
+import { formatUSD } from "../services/currency";
 
 function CallHistory() {
   const [selectedAgent, setSelectedAgent] = useState("all");
@@ -13,7 +14,7 @@ function CallHistory() {
     return mockCallHistory.filter((call) => call.agentName === selectedAgent);
   }, [selectedAgent]);
 
-  const totalCost = filteredCalls.reduce((sum, call) => sum + call.cost, 0);
+  const totalCostCents = filteredCalls.reduce((sum, call) => sum + call.cost, 0);
 
   // Get unique agent names for filter
   const agentNames = useMemo(() => {
@@ -68,7 +69,7 @@ function CallHistory() {
         <div className="bg-white rounded-lg shadow-md p-6">
           <h4 className="text-gray-600 text-sm font-medium mb-2">Total Cost</h4>
           <p className="text-3xl font-bold text-blue-600">
-            ${totalCost.toFixed(2)}
+            {formatUSD(totalCostCents)}
           </p>
         </div>
         <div className="bg-white rounded-lg shadow-md p-6">
@@ -76,10 +77,9 @@ function CallHistory() {
             Average Cost
           </h4>
           <p className="text-3xl font-bold text-purple-600">
-            $
-            {filteredCalls.length > 0
-              ? (totalCost / filteredCalls.length).toFixed(2)
-              : "0.00"}
+            {formatUSD(
+              filteredCalls.length > 0 ? totalCostCents / filteredCalls.length : 0
+            )}
           </p>
         </div>
       </div>
@@ -156,7 +156,7 @@ function CallHistory() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    ${call.cost.toFixed(2)}
+                    {formatUSD(call.cost)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {call.recordingUrl ? (

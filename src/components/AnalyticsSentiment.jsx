@@ -4,25 +4,15 @@ import { analyticsAPI } from '../services/api';
 function AnalyticsSentiment() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({
-    startDate: '',
-    endDate: '',
-    agentId: '',
-  });
 
   useEffect(() => {
     fetchData();
-  }, [filters]);
+  }, []);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const params = {};
-      if (filters.startDate) params.startDate = filters.startDate;
-      if (filters.endDate) params.endDate = filters.endDate;
-      if (filters.agentId) params.agentId = filters.agentId;
-
-      const response = await analyticsAPI.getSentiment(params);
+      const response = await analyticsAPI.getSentiment();
       setData(response.data);
     } catch (err) {
       console.error('Failed to fetch sentiment analytics:', err);
@@ -44,38 +34,6 @@ function AnalyticsSentiment() {
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
-            <input
-              type="date"
-              value={filters.startDate}
-              onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
-            <input
-              type="date"
-              value={filters.endDate}
-              onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-            />
-          </div>
-          <div className="flex items-end">
-            <button
-              onClick={() => setFilters({ startDate: '', endDate: '', agentId: '' })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              Clear Filters
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Summary */}
       <div className="bg-white rounded-lg shadow p-6">
         <h3 className="text-lg font-semibold mb-4">Sentiment Overview</h3>
@@ -137,5 +95,4 @@ function AnalyticsSentiment() {
 }
 
 export default AnalyticsSentiment;
-
 

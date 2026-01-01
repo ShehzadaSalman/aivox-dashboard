@@ -135,8 +135,8 @@ export const callAPI = {
     return apiRequest(`/api/dashboard/call-history?${queryString}`);
   },
 
-  sync: async (days = 30, agentId = null) => {
-    const payload = { days };
+  sync: async (agentId = null) => {
+    const payload = {};
     if (agentId) {
       payload.agentId = agentId;
     }

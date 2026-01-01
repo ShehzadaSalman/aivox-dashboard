@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { callAPI, agentAPI } from '../services/api';
+import { formatUSD } from '../services/currency';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -12,8 +13,6 @@ function CallManagement() {
   const [pagination, setPagination] = useState({ total: 0, limit: 20, offset: 0, hasMore: false });
   const [filters, setFilters] = useState({
     agentId: '',
-    startDate: '',
-    endDate: '',
     callStatus: '',
     sortBy: 'date',
   });
@@ -42,8 +41,6 @@ function CallManagement() {
         offset: pagination.offset,
         sortBy: filters.sortBy,
         ...(filters.agentId && { agentId: filters.agentId }),
-        ...(filters.startDate && { startDate: filters.startDate }),
-        ...(filters.endDate && { endDate: filters.endDate }),
         ...(filters.callStatus && { callStatus: filters.callStatus }),
       };
       const response = await callAPI.list(params);
@@ -57,14 +54,9 @@ function CallManagement() {
   };
 
   const handleSync = async () => {
-    const days = parseInt(prompt('How many days to sync? (1-90)', '30') || '30');
-    if (isNaN(days) || days < 1 || days > 90) {
-      alert('Please enter a number between 1 and 90');
-      return;
-    }
     try {
       setSyncing(true);
-      await callAPI.sync(days, filters.agentId || undefined);
+      await callAPI.sync(filters.agentId || undefined);
       await fetchCalls();
       alert('Calls synced successfully!');
     } catch (err) {
@@ -108,7 +100,7 @@ function CallManagement() {
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Agent</label>
             <select
@@ -123,24 +115,6 @@ function CallManagement() {
                 </option>
               ))}
             </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
-            <input
-              type="date"
-              value={filters.startDate}
-              onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
-            <input
-              type="date"
-              value={filters.endDate}
-              onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
@@ -205,7 +179,7 @@ function CallManagement() {
                       {formatDuration(call.duration_seconds)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      ${call.cost.toFixed(2)}
+                      {formatUSD(call.cost)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
@@ -322,7 +296,7 @@ function CallDetailsModal({ call, onClose }) {
               <div><span className="font-medium">Start:</span> {formatDate(call.start_timestamp)}</div>
               <div><span className="font-medium">End:</span> {formatDate(call.end_timestamp)}</div>
               <div><span className="font-medium">Duration:</span> {formatDuration(call.duration_seconds)}</div>
-              <div><span className="font-medium">Cost:</span> ${call.cost.toFixed(2)}</div>
+              <div><span className="font-medium">Cost:</span> {formatUSD(call.cost)}</div>
               <div>
                 <span className="font-medium">Status:</span>{' '}
                 <span className={`px-2 py-1 rounded-full text-xs ${

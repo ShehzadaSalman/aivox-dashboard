@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { utilityAPI, analyticsAPI, agentAPI, callAPI } from '../services/api';
+import { formatUSD } from '../services/currency';
 import { useAuth } from '../contexts/AuthContext';
 
 function DashboardOverview() {
@@ -11,8 +12,6 @@ function DashboardOverview() {
   const [syncing, setSyncing] = useState(false);
   const totalCostCents = analytics?.totalCost ?? stats?.cost?.total ?? 0;
   const avgCostCents = analytics?.avgCost ?? 0;
-  const totalCostDollars = totalCostCents / 100;
-  const avgCostDollars = avgCostCents / 100;
 
   useEffect(() => {
     fetchData();
@@ -35,15 +34,10 @@ function DashboardOverview() {
   };
 
   const handleFullSync = async () => {
-    const days = parseInt(prompt('How many days to sync calls? (1-365)', '365') || '365');
-    if (isNaN(days) || days < 1 || days > 365) {
-      alert('Please enter a number between 1 and 365');
-      return;
-    }
     try {
       setSyncing(true);
       await agentAPI.sync();
-      await callAPI.sync(days);
+      await callAPI.sync();
       await fetchData();
       alert('Agents and calls synced successfully!');
     } catch (err) {
@@ -105,8 +99,8 @@ function DashboardOverview() {
         />
         <StatCard
           title="Total Cost"
-          value={`$${totalCostDollars.toFixed(2)}`}
-          subtitle={`Avg: $${avgCostDollars.toFixed(2)}`}
+          value={formatUSD(totalCostCents)}
+          subtitle={`Avg: ${formatUSD(avgCostCents)}`}
           icon="💰"
           color="purple"
         />
@@ -149,11 +143,11 @@ function DashboardOverview() {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Total Cost</span>
-                <span className="font-semibold">${totalCostDollars.toFixed(2)}</span>
+                <span className="font-semibold">{formatUSD(totalCostCents)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Average Cost per Call</span>
-                <span className="font-semibold">${avgCostDollars.toFixed(2)}</span>
+                <span className="font-semibold">{formatUSD(avgCostCents)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Total Duration</span>

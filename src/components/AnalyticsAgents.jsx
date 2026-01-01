@@ -1,19 +1,16 @@
 import { useState, useEffect } from 'react';
 import { analyticsAPI, agentAPI } from '../services/api';
+import { formatUSD } from '../services/currency';
 
 function AnalyticsAgents() {
   const [agents, setAgents] = useState([]);
   const [agentNameMap, setAgentNameMap] = useState({});
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({
-    startDate: '',
-    endDate: '',
-  });
 
   useEffect(() => {
     fetchData();
     fetchAgentNames();
-  }, [filters]);
+  }, []);
 
   const fetchAgentNames = async () => {
     try {
@@ -33,11 +30,7 @@ function AnalyticsAgents() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const params = {};
-      if (filters.startDate) params.startDate = filters.startDate;
-      if (filters.endDate) params.endDate = filters.endDate;
-
-      const response = await analyticsAPI.getAgents(params);
+      const response = await analyticsAPI.getAgents();
       setAgents(response.data);
     } catch (err) {
       console.error('Failed to fetch agent analytics:', err);
@@ -52,38 +45,6 @@ function AnalyticsAgents() {
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
-            <input
-              type="date"
-              value={filters.startDate}
-              onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
-            <input
-              type="date"
-              value={filters.endDate}
-              onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-            />
-          </div>
-          <div className="flex items-end">
-            <button
-              onClick={() => setFilters({ startDate: '', endDate: '' })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              Clear Filters
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Agent Performance Table */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
@@ -132,10 +93,10 @@ function AnalyticsAgents() {
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  ${agent.totalCost.toFixed(2)}
+                  {formatUSD(agent.totalCost)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  ${agent.avgCost.toFixed(2)}
+                  {formatUSD(agent.avgCost)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {agent.avgDurationSeconds}s
@@ -151,5 +112,3 @@ function AnalyticsAgents() {
 }
 
 export default AnalyticsAgents;
-
-

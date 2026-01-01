@@ -49,7 +49,7 @@ export const mockCallHistory = [
     phoneNumber: "+1-555-0123",
     duration: "5:32",
     timestamp: "2025-10-02 14:23:15",
-    cost: 0.45,
+    cost: 45,
     status: "completed",
     recordingUrl:
       "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
@@ -61,7 +61,7 @@ export const mockCallHistory = [
     phoneNumber: "+1-555-0456",
     duration: "8:15",
     timestamp: "2025-10-02 13:45:22",
-    cost: 0.67,
+    cost: 67,
     status: "completed",
     recordingUrl:
       "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
@@ -73,7 +73,7 @@ export const mockCallHistory = [
     phoneNumber: "+1-555-0789",
     duration: "12:48",
     timestamp: "2025-10-02 13:12:05",
-    cost: 1.04,
+    cost: 104,
     status: "completed",
     recordingUrl:
       "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
@@ -85,7 +85,7 @@ export const mockCallHistory = [
     phoneNumber: "+1-555-0321",
     duration: "3:25",
     timestamp: "2025-10-02 12:55:33",
-    cost: 0.28,
+    cost: 28,
     status: "completed",
     recordingUrl:
       "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
@@ -97,7 +97,7 @@ export const mockCallHistory = [
     phoneNumber: "+1-555-0654",
     duration: "1:15",
     timestamp: "2025-10-02 12:30:18",
-    cost: 0.1,
+    cost: 10,
     status: "no-answer",
     recordingUrl: null,
   },
@@ -108,7 +108,7 @@ export const mockCallHistory = [
     phoneNumber: "+1-555-0987",
     duration: "7:42",
     timestamp: "2025-10-02 11:45:50",
-    cost: 0.63,
+    cost: 63,
     status: "completed",
     recordingUrl:
       "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
@@ -120,7 +120,7 @@ export const mockCallHistory = [
     phoneNumber: "+1-555-0147",
     duration: "4:33",
     timestamp: "2025-10-02 11:20:12",
-    cost: 0.37,
+    cost: 37,
     status: "completed",
     recordingUrl:
       "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3",
@@ -132,7 +132,7 @@ export const mockCallHistory = [
     phoneNumber: "+1-555-0258",
     duration: "15:20",
     timestamp: "2025-10-02 10:55:45",
-    cost: 1.25,
+    cost: 125,
     status: "completed",
     recordingUrl:
       "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3",
@@ -144,7 +144,7 @@ export const mockCallHistory = [
     phoneNumber: "+1-555-0369",
     duration: "6:18",
     timestamp: "2025-10-02 10:15:33",
-    cost: 0.51,
+    cost: 51,
     status: "completed",
     recordingUrl:
       "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
@@ -156,7 +156,7 @@ export const mockCallHistory = [
     phoneNumber: "+1-555-0741",
     duration: "2:45",
     timestamp: "2025-10-02 09:40:27",
-    cost: 0.22,
+    cost: 22,
     status: "completed",
     recordingUrl:
       "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3",

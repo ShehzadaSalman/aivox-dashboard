@@ -1,28 +1,19 @@
 import { useState, useEffect } from 'react';
 import { analyticsAPI } from '../services/api';
+import { centsToDollars, formatUSD } from '../services/currency';
 
 function AnalyticsOverview() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({
-    startDate: '',
-    endDate: '',
-    agentId: '',
-  });
 
   useEffect(() => {
     fetchData();
-  }, [filters]);
+  }, []);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const params = {};
-      if (filters.startDate) params.startDate = filters.startDate;
-      if (filters.endDate) params.endDate = filters.endDate;
-      if (filters.agentId) params.agentId = filters.agentId;
-
-      const response = await analyticsAPI.getOverview(params);
+      const response = await analyticsAPI.getOverview();
       setData(response.data);
     } catch (err) {
       console.error('Failed to fetch analytics:', err);
@@ -41,38 +32,6 @@ function AnalyticsOverview() {
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
-            <input
-              type="date"
-              value={filters.startDate}
-              onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
-            <input
-              type="date"
-              value={filters.endDate}
-              onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-            />
-          </div>
-          <div className="flex items-end">
-            <button
-              onClick={() => setFilters({ startDate: '', endDate: '', agentId: '' })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              Clear Filters
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricCard
@@ -89,7 +48,7 @@ function AnalyticsOverview() {
         />
         <MetricCard
           title="Total Cost"
-          value={`$${data.totalCost.toFixed(2)}`}
+          value={formatUSD(data.totalCost)}
           icon="💰"
           color="purple"
         />
@@ -117,9 +76,16 @@ function AnalyticsOverview() {
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold mb-4">Cost Analysis</h3>
           <div className="space-y-3">
-            <StatRow label="Total Cost" value={`$${data.totalCost.toFixed(2)}`} />
-            <StatRow label="Average Cost" value={`$${data.avgCost.toFixed(2)}`} />
-            <StatRow label="Cost per Minute" value={`$${((data.avgCost / data.avgDurationSeconds) * 60).toFixed(2)}`} />
+            <StatRow label="Total Cost" value={formatUSD(data.totalCost)} />
+            <StatRow label="Average Cost" value={formatUSD(data.avgCost)} />
+            <StatRow
+              label="Cost per Minute"
+              value={`$${(
+                data.avgDurationSeconds
+                  ? (centsToDollars(data.avgCost) / data.avgDurationSeconds) * 60
+                  : 0
+              ).toFixed(2)}`}
+            />
           </div>
         </div>
       </div>
@@ -164,5 +130,3 @@ function StatRow({ label, value }) {
 }
 
 export default AnalyticsOverview;
-
-
