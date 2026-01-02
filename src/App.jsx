@@ -12,13 +12,9 @@ import ErrorBoundary from "./components/ErrorBoundary";
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
 
-  console.log("Just testing the console log");
-  console.log("Just testing the console log");
-  console.log("Just testing the console log");
-
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-screen">
         <div className="text-lg">Loading...</div>
       </div>
     );

@@ -1,7 +1,9 @@
 // API Service - Handles all backend API calls
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.VITE_BACKEND_URL ||
+  "http://localhost:3000";
 
 // Helper function to get auth token from localStorage
 const getAuthToken = () => {
