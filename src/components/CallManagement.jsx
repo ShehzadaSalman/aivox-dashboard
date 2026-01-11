@@ -76,18 +76,20 @@ function CallManagement() {
     return `${mins}m ${secs}s`;
   };
 
+  console.log("Call history: ", calls)
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Call Management</h1>
-          <p className="text-gray-600 mt-1">View and manage all calls</p>
+          <p className="mt-1 text-gray-600">View and manage all calls</p>
         </div>
         {isSuperAdmin() ? (
           <button
             onClick={handleSync}
             disabled={syncing}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+            className="px-4 py-2 text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50"
           >
             {syncing ? 'Syncing...' : 'Sync Calls'}
           </button>
@@ -99,10 +101,10 @@ function CallManagement() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="p-4 bg-white rounded-lg shadow">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Agent</label>
+            <label className="block mb-2 text-sm font-medium text-gray-700">Agent</label>
             <select
               value={filters.agentId}
               onChange={(e) => setFilters({ ...filters, agentId: e.target.value })}
@@ -117,7 +119,7 @@ function CallManagement() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+            <label className="block mb-2 text-sm font-medium text-gray-700">Status</label>
             <input
               type="text"
               value={filters.callStatus}
@@ -127,7 +129,7 @@ function CallManagement() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+            <label className="block mb-2 text-sm font-medium text-gray-700">Sort By</label>
             <select
               value={filters.sortBy}
               onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
@@ -143,42 +145,42 @@ function CallManagement() {
 
       {/* Calls Table */}
       {loading ? (
-        <div className="text-center py-12">Loading calls...</div>
+        <div className="py-12 text-center">Loading calls...</div>
       ) : error ? (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="p-4 border border-red-200 rounded-lg bg-red-50">
           <p className="text-red-600">Error: {error}</p>
         </div>
       ) : (
         <>
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+              <div className="overflow-hidden bg-white rounded-lg shadow">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Call ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Agent</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Duration</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cost</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                      <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Call ID</th>
+                      <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Agent</th>
+                      <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Date</th>
+                      <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Duration</th>
+                      <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Cost</th>
+                      <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Status</th>
+                      <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {calls.map((call) => (
                   <tr key={call.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td className="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">
                       {call.call_id.substring(0, 20)}...
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
                       {call.agent?.agent_name || call.agent_id}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
                       {formatDate(call.start_timestamp)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
                       {formatDuration(call.duration_seconds)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
                       {formatUSD(call.cost)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -192,7 +194,7 @@ function CallManagement() {
                         {call.call_status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-6 py-4 text-sm font-medium whitespace-nowrap">
                       <button
                         onClick={() => setSelectedCall(call)}
                         className="text-blue-600 hover:text-blue-900"
@@ -207,7 +209,7 @@ function CallManagement() {
           </div>
 
           {/* Pagination */}
-          <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
             <div className="text-sm text-gray-700">
               Showing {pagination.offset + 1} to{' '}
               {Math.min(pagination.offset + pagination.limit, pagination.total)} of{' '}
@@ -275,13 +277,13 @@ function CallDetailsModal({ call, onClose }) {
   const transcriptLines = formatTranscriptLines(call.transcript);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold">Call Details</h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl"
+            className="text-2xl text-gray-500 hover:text-gray-700"
           >
             ×
           </button>
@@ -289,7 +291,7 @@ function CallDetailsModal({ call, onClose }) {
 
         <div className="grid grid-cols-2 gap-6">
           <div>
-            <h3 className="font-semibold text-gray-700 mb-2">Call Information</h3>
+            <h3 className="mb-2 font-semibold text-gray-700">Call Information</h3>
             <div className="space-y-2 text-sm">
               <div><span className="font-medium">Call ID:</span> {call.call_id}</div>
               <div><span className="font-medium">Agent:</span> {call.agent?.agent_name || call.agent_id}</div>
@@ -309,7 +311,7 @@ function CallDetailsModal({ call, onClose }) {
           </div>
 
           <div>
-            <h3 className="font-semibold text-gray-700 mb-2">Call Analysis</h3>
+            <h3 className="mb-2 font-semibold text-gray-700">Call Analysis</h3>
             <div className="space-y-2 text-sm">
               {call.call_summary && (
                 <div>
@@ -334,7 +336,7 @@ function CallDetailsModal({ call, onClose }) {
 
         {call.recording_url && (
           <div className="mt-6">
-            <h3 className="font-semibold text-gray-700 mb-2">Audio</h3>
+            <h3 className="mb-2 font-semibold text-gray-700">Audio</h3>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <audio controls className="w-full sm:flex-1">
                 <source src={call.recording_url} />
@@ -343,7 +345,7 @@ function CallDetailsModal({ call, onClose }) {
               <a
                 href={call.recording_url}
                 download
-                className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
+                className="inline-flex items-center justify-center px-4 py-2 text-white rounded-lg bg-emerald-600 hover:bg-emerald-700"
               >
                 Download
               </a>
@@ -353,8 +355,8 @@ function CallDetailsModal({ call, onClose }) {
 
         {call.transcript && (
           <div className="mt-6">
-            <h3 className="font-semibold text-gray-700 mb-2">Transcript</h3>
-            <div className="bg-gray-50 p-4 rounded-lg text-sm max-h-64 overflow-y-auto">
+            <h3 className="mb-2 font-semibold text-gray-700">Transcript</h3>
+            <div className="p-4 overflow-y-auto text-sm rounded-lg bg-gray-50 max-h-64">
               {transcriptLines.length > 0 ? (
                 <div className="space-y-2">
                   {transcriptLines.map((line, index) => (
@@ -372,8 +374,8 @@ function CallDetailsModal({ call, onClose }) {
 
         {call.caller_info && (
           <div className="mt-4">
-            <h3 className="font-semibold text-gray-700 mb-2">Caller Information</h3>
-            <div className="bg-gray-50 p-4 rounded-lg text-sm">
+            <h3 className="mb-2 font-semibold text-gray-700">Caller Information</h3>
+            <div className="p-4 text-sm rounded-lg bg-gray-50">
               {call.caller_info}
             </div>
           </div>

@@ -55,9 +55,9 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (email, password, name) => {
+  const register = async (email, password, name, phone) => {
     try {
-      const response = await authAPI.register(email, password, name);
+      const response = await authAPI.register(email, password, name, phone);
       if (response.success) {
         if (response.token) {
           if (typeof window !== 'undefined') {
@@ -74,6 +74,24 @@ export const AuthProvider = ({ children }) => {
         };
       }
       return { success: false, error: 'Registration failed' };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  };
+
+  const startPhoneVerification = async (email, phone = null) => {
+    try {
+      const response = await authAPI.startPhoneVerification(email, phone);
+      return { success: true, data: response };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  };
+
+  const verifyPhone = async (email, code) => {
+    try {
+      const response = await authAPI.verifyPhone(email, code);
+      return { success: true, data: response };
     } catch (error) {
       return { success: false, error: error.message };
     }
@@ -100,6 +118,8 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     register,
+    startPhoneVerification,
+    verifyPhone,
     logout,
     isAdmin,
     isSuperAdmin,

@@ -59,10 +59,10 @@ const apiRequest = async (endpoint, options = {}) => {
 
 // Authentication APIs
 export const authAPI = {
-  register: async (email, password, name) => {
+  register: async (email, password, name, phone) => {
     return apiRequest("/api/auth/register", {
       method: "POST",
-      body: JSON.stringify({ email, password, name }),
+      body: JSON.stringify({ email, password, name, phone }),
     });
   },
 
@@ -75,6 +75,21 @@ export const authAPI = {
 
   getMe: async () => {
     return apiRequest("/api/auth/me");
+  },
+
+  startPhoneVerification: async (email, phone = null) => {
+    const payload = { email, ...(phone ? { phone } : {}) };
+    return apiRequest("/api/auth/phone/start", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  verifyPhone: async (email, code) => {
+    return apiRequest("/api/auth/phone/verify", {
+      method: "POST",
+      body: JSON.stringify({ email, code }),
+    });
   },
 };
 
@@ -151,6 +166,20 @@ export const callAPI = {
   search: async (query, params = {}) => {
     const queryString = new URLSearchParams({ query, ...params }).toString();
     return apiRequest(`/api/dashboard/search/calls?${queryString}`);
+  },
+};
+
+// Lead Management APIs
+export const leadAPI = {
+  list: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const suffix = queryString ? `?${queryString}` : "";
+    return apiRequest(`/api/dashboard/leads${suffix}`);
+  },
+  delete: async (leadId) => {
+    return apiRequest(`/api/dashboard/leads/${leadId}`, {
+      method: "DELETE",
+    });
   },
 };
 
@@ -254,6 +283,7 @@ export default {
   auth: authAPI,
   agent: agentAPI,
   call: callAPI,
+  lead: leadAPI,
   analytics: analyticsAPI,
   user: userAPI,
   utility: utilityAPI,
