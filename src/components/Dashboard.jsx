@@ -5,7 +5,6 @@ import DashboardOverview from "./DashboardOverview";
 import AgentManagement from "./AgentManagement";
 import CallManagement from "./CallManagement";
 import Leads from "./Leads";
-import Appointments from "./Appointments";
 import Analytics from "./Analytics";
 import UserManagement from "./UserManagement";
 
@@ -19,7 +18,6 @@ function Dashboard() {
     { path: "/dashboard/agents", label: "Agents", icon: "👥" },
     { path: "/dashboard/calls", label: "Calls", icon: "📞" },
     { path: "/dashboard/leads", label: "Leads", icon: "🧾" },
-    { path: "/dashboard/appointments", label: "Appointments", icon: "📅" },
   ];
 
   if (isAdmin()) {
@@ -120,7 +118,6 @@ function Dashboard() {
           <Route path="/agents" element={<AgentManagement />} />
           <Route path="/calls" element={<CallManagement />} />
           <Route path="/leads" element={<Leads />} />
-          <Route path="/appointments" element={<Appointments />} />
           <Route path="/analytics/*" element={<Analytics />} />
           {isAdmin() && <Route path="/users" element={<UserManagement />} />}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

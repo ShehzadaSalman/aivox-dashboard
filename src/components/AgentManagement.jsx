@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { agentAPI } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 function AgentManagement() {
+  const { isSuperAdmin } = useAuth();
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -9,7 +11,6 @@ function AgentManagement() {
   const [filters, setFilters] = useState({ status: '', search: '' });
   const [showModal, setShowModal] = useState(false);
   const [editingAgent, setEditingAgent] = useState(null);
-  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     fetchAgents();
@@ -36,18 +37,6 @@ function AgentManagement() {
     }
   };
 
-  const handleSync = async () => {
-    try {
-      setSyncing(true);
-      await agentAPI.sync();
-      await fetchAgents();
-      alert('Agents synced successfully!');
-    } catch (err) {
-      alert(`Sync failed: ${err.message}`);
-    } finally {
-      setSyncing(false);
-    }
-  };
 
   const handleDelete = async (agentId) => {
     if (!window.confirm('Are you sure you want to deactivate this agent?')) {
@@ -71,6 +60,8 @@ function AgentManagement() {
     setShowModal(true);
   };
 
+  const superAdmin = isSuperAdmin();
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -79,19 +70,6 @@ function AgentManagement() {
           <p className="text-gray-600 mt-1">Manage your AI voice agents</p>
         </div>
         <div className="flex gap-3">
-          <button
-            onClick={handleSync}
-            disabled={syncing}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-          >
-            {syncing ? 'Syncing...' : 'Sync from Retell'}
-          </button>
-          <button
-            onClick={handleCreate}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            + Create Agent
-          </button>
         </div>
       </div>
 
@@ -127,7 +105,7 @@ function AgentManagement() {
         </div>
       </div>
 
-      {/* Agents Table */}
+      {/* Agents Cards */}
       {loading ? (
         <AgentsSkeleton />
       ) : error ? (
@@ -136,74 +114,57 @@ function AgentManagement() {
         </div>
       ) : (
         <>
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Agent ID
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Calls
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Created
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {agents.map((agent) => (
-                  <tr key={agent.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {agent.agent_id}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {agent.agent_name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {agents.map((agent) => (
+              <div
+                key={agent.id}
+                className="relative bg-white rounded-2xl border border-gray-100 p-5 flex items-center justify-between gap-4 hover:border-gray-200 hover:shadow-sm transition"
+              >
+                <span className="absolute left-0 top-0 h-full w-1.5 rounded-l-2xl bg-gradient-to-b from-amber-400 via-rose-400 to-fuchsia-500" />
+                <div className="flex items-center gap-4">
+                  <div className="h-14 w-14 rounded-full bg-gradient-to-br from-amber-50 to-rose-100 border border-amber-200 flex items-center justify-center text-amber-700 text-base font-semibold">
+                    {(agent.agent_name || 'A').slice(0, 1).toUpperCase()}
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">{agent.agent_name}</h3>
+                    {superAdmin && (
+                      <p className="text-[11px] text-gray-500 mt-1">{agent.agent_id}</p>
+                    )}
+                    <div className="mt-2">
                       <span
-                        className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                          agent.status === 'ACTIVE'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
+                        className={`inline-flex items-center gap-2 text-xs font-medium ${
+                          agent.status === 'ACTIVE' ? 'text-emerald-700' : 'text-rose-700'
                         }`}
                       >
-                        {agent.status}
+                        <span
+                          className={`h-2 w-2 rounded-full ${
+                            agent.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-rose-500'
+                          }`}
+                        />
+                        {agent.status === 'ACTIVE' ? 'Active' : 'Inactive'}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {agent._count?.calls || 0}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(agent.created_at).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => handleEdit(agent)}
-                        className="text-blue-600 hover:text-blue-900 mr-4"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(agent.agent_id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleEdit(agent)}
+                    className="px-3 py-1.5 text-sm font-medium text-gray-700 border border-gray-200 rounded-full hover:bg-gray-50"
+                  >
+                    Edit
+                  </button>
+                  {superAdmin && (
+                    <button
+                      onClick={() => handleDelete(agent.agent_id)}
+                      className="px-3 py-1.5 text-sm font-medium text-red-600 border border-red-200 rounded-full hover:bg-red-50"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Pagination */}
@@ -364,22 +325,24 @@ function AgentModal({ agent, onClose, onSave }) {
 
 function AgentsSkeleton() {
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden animate-pulse">
-      <div className="p-4 border-b border-gray-200">
-        <div className="h-4 w-40 bg-gray-200 rounded" />
-      </div>
-      <div className="divide-y divide-gray-200">
-        {Array.from({ length: 8 }).map((_, index) => (
-          <div key={index} className="px-6 py-4 grid grid-cols-6 gap-4">
-            <div className="h-4 bg-gray-200 rounded col-span-1" />
-            <div className="h-4 bg-gray-200 rounded col-span-1" />
-            <div className="h-4 bg-gray-200 rounded col-span-1" />
-            <div className="h-4 bg-gray-200 rounded col-span-1" />
-            <div className="h-4 bg-gray-200 rounded col-span-1" />
-            <div className="h-4 bg-gray-200 rounded col-span-1" />
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-pulse">
+      {Array.from({ length: 6 }).map((_, index) => (
+        <div key={index} className="relative bg-white rounded-2xl border border-gray-100 p-5 flex items-center justify-between gap-4">
+          <div className="absolute left-0 top-0 h-full w-1.5 rounded-l-2xl bg-gray-200" />
+          <div className="flex items-center gap-4">
+            <div className="h-14 w-14 bg-gray-200 rounded-full" />
+            <div className="space-y-2">
+              <div className="h-4 w-32 bg-gray-200 rounded" />
+              <div className="h-3 w-24 bg-gray-200 rounded" />
+              <div className="h-3 w-16 bg-gray-200 rounded" />
+            </div>
           </div>
-        ))}
-      </div>
+          <div className="flex items-center gap-2">
+            <div className="h-4 w-12 bg-gray-200 rounded" />
+            <div className="h-4 w-14 bg-gray-200 rounded" />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

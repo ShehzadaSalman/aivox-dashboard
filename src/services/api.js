@@ -123,12 +123,6 @@ export const agentAPI = {
       method: "DELETE",
     });
   },
-
-  sync: async () => {
-    return apiRequest("/api/dashboard/sync-agents", {
-      method: "POST",
-    });
-  },
 };
 
 // Call Management APIs
@@ -150,17 +144,6 @@ export const callAPI = {
   getAllHistory: async (params = {}) => {
     const queryString = new URLSearchParams(params).toString();
     return apiRequest(`/api/dashboard/call-history?${queryString}`);
-  },
-
-  sync: async (agentId = null) => {
-    const payload = {};
-    if (agentId) {
-      payload.agentId = agentId;
-    }
-    return apiRequest("/api/dashboard/sync-calls", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
   },
 
   search: async (query, params = {}) => {
@@ -263,10 +246,6 @@ export const utilityAPI = {
 
   getStats: async () => {
     return apiRequest("/api/dashboard/stats");
-  },
-
-  getSyncStatus: async () => {
-    return apiRequest("/api/dashboard/sync-status");
   },
 };
 

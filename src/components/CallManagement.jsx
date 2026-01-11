@@ -1,11 +1,7 @@
 import { useState, useEffect } from 'react';
 import { callAPI, agentAPI } from '../services/api';
 import { formatUSD } from '../services/currency';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-
 function CallManagement() {
-  const { isSuperAdmin } = useAuth();
   const [calls, setCalls] = useState([]);
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,7 +13,6 @@ function CallManagement() {
     sortBy: 'date',
   });
   const [selectedCall, setSelectedCall] = useState(null);
-  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
      fetchAgents();
@@ -54,19 +49,6 @@ function CallManagement() {
     }
   };
 
-  const handleSync = async () => {
-    try {
-      setSyncing(true);
-      await callAPI.sync(filters.agentId || undefined);
-      await fetchCalls();
-      alert('Calls synced successfully!');
-    } catch (err) {
-      alert(`Sync failed: ${err.message}`);
-    } finally {
-      setSyncing(false);
-    }
-  };
-
   const formatDate = (timestamp) => {
     return new Date(timestamp).toLocaleString();
   };
@@ -86,19 +68,6 @@ function CallManagement() {
           <h1 className="text-3xl font-bold text-gray-900">Call Management</h1>
           <p className="mt-1 text-gray-600">View and manage all calls</p>
         </div>
-        {isSuperAdmin() ? (
-          <button
-            onClick={handleSync}
-            disabled={syncing}
-            className="px-4 py-2 text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50"
-          >
-            {syncing ? 'Syncing...' : 'Sync Calls'}
-          </button>
-        ) : (
-          <div className="text-sm text-gray-500">
-            Syncing calls is restricted to superadmin.
-          </div>
-        )}
       </div>
 
       {/* Filters */}

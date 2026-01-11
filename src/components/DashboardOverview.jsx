@@ -1,15 +1,12 @@
 import { useState, useEffect } from 'react';
-import { utilityAPI, agentAPI, callAPI } from '../services/api';
+import { utilityAPI } from '../services/api';
 import { formatUSD } from '../services/currency';
-import { useAuth } from '../contexts/AuthContext';
 
 function DashboardOverview() {
-  const { isAdmin } = useAuth();
   const [stats, setStats] = useState(null);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [syncing, setSyncing] = useState(false);
   const totalCostCents = analytics?.totalCost ?? stats?.cost?.total ?? 0;
   const avgCostCents = analytics?.avgCost ?? 0;
 
@@ -27,20 +24,6 @@ function DashboardOverview() {
       setError(err.message);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleFullSync = async () => {
-    try {
-      setSyncing(true);
-      await agentAPI.sync();
-      await callAPI.sync();
-      await fetchData();
-      alert('Agents and calls synced successfully!');
-    } catch (err) {
-      alert(`Sync failed: ${err.message}`);
-    } finally {
-      setSyncing(false);
     }
   };
 
@@ -63,15 +46,6 @@ function DashboardOverview() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard Overview</h1>
           <p className="text-gray-600">Welcome to your AI Receptionist Dashboard</p>
         </div>
-        {isAdmin() && (
-          <button
-            onClick={handleFullSync}
-            disabled={syncing}
-            className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50"
-          >
-            {syncing ? 'Syncing...' : 'Sync Agents & Calls'}
-          </button>
-        )}
       </div>
 
       {/* Stats Cards */}
@@ -186,7 +160,6 @@ function DashboardSkeleton() {
           <div className="h-7 w-48 bg-gray-200 rounded mb-2" />
           <div className="h-4 w-64 bg-gray-200 rounded" />
         </div>
-        <div className="h-10 w-44 bg-gray-200 rounded" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
