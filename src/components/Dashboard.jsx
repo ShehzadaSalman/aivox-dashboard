@@ -32,12 +32,12 @@ function Dashboard() {
     <div className="min-h-screen bg-gray-100">
       {/* Navigation Bar */}
       <nav className="bg-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <img src="/logo.svg" alt="AI Vox Agency" className="h-10" />
+              <img src="/new-logo-website.png" alt="AI Vox Agency" className="h-12" />
             </div>
-            <div className="hidden md:flex items-center space-x-4">
+            <div className="items-center hidden space-x-4 md:flex">
               {navLinks.map((link) => (
                 <Link
                   key={link.path}
@@ -52,12 +52,12 @@ function Dashboard() {
                   <span>{link.label}</span>
                 </Link>
               ))}
-              <div className="ml-4 px-4 py-2 text-sm text-gray-600">
+              <div className="px-4 py-2 ml-4 text-sm text-gray-600">
                 {user?.email}
               </div>
               <button
                 onClick={logout}
-                className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition"
+                className="px-4 py-2 text-white transition bg-gray-900 rounded-lg hover:bg-gray-800"
               >
                 Logout
               </button>
@@ -66,7 +66,7 @@ function Dashboard() {
               <button
                 type="button"
                 onClick={() => setMobileOpen((open) => !open)}
-                className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:bg-gray-100"
+                className="inline-flex items-center justify-center p-2 text-gray-700 rounded-md hover:bg-gray-100"
                 aria-controls="mobile-menu"
                 aria-expanded={mobileOpen}
               >
@@ -81,7 +81,7 @@ function Dashboard() {
           </div>
         </div>
         {mobileOpen && (
-          <div id="mobile-menu" className="md:hidden border-t border-gray-200">
+          <div id="mobile-menu" className="border-t border-gray-200 md:hidden">
             <div className="px-4 pt-4 pb-3 space-y-2">
               {navLinks.map((link) => (
                 <Link
@@ -102,7 +102,7 @@ function Dashboard() {
               </div>
               <button
                 onClick={logout}
-                className="w-full px-4 py-2 text-left bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition"
+                className="w-full px-4 py-2 text-left text-white transition bg-gray-900 rounded-lg hover:bg-gray-800"
               >
                 Logout
               </button>
@@ -112,7 +112,7 @@ function Dashboard() {
       </nav>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
         <Routes>
           <Route path="/" element={<DashboardOverview />} />
           <Route path="/agents" element={<AgentManagement />} />
