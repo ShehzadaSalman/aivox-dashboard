@@ -168,7 +168,7 @@ function CallHistory() {
                               playingAudio === call.id ? null : call.id
                             )
                           }
-                          className="px-3 py-1 text-xs font-medium text-white transition bg-blue-500 rounded-lg hover:bg-blue-600"
+                          className="px-3 py-1 text-xs font-medium text-white transition bg-gray-900 rounded-lg hover:bg-gray-800"
                         >
                           {playingAudio === call.id ? "⏸ Pause" : "▶ Play"}
                         </button>

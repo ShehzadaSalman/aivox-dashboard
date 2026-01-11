@@ -217,7 +217,7 @@ function Leads() {
                       type="button"
                       onClick={() => handleDelete(lead.id)}
                       disabled={deletingId === lead.id}
-                      className="text-red-600 hover:text-red-800 disabled:opacity-50"
+                      className="text-gray-900 hover:text-gray-700 disabled:opacity-50"
                     >
                       {deletingId === lead.id ? "Deleting..." : "Delete"}
                     </button>

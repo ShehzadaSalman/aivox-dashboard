@@ -211,7 +211,7 @@ function UserManagement() {
                               alert(`Failed to approve user: ${err.message}`);
                             }
                           }}
-                          className="text-emerald-600 hover:text-emerald-900 mr-4"
+                          className="text-gray-900 hover:text-gray-700 mr-4"
                         >
                           Approve
                         </button>
@@ -219,21 +219,21 @@ function UserManagement() {
                       <button
                         onClick={() => handleEdit(user)}
                         disabled={user.role === 'SUPERADMIN' && !isSuperAdmin()}
-                        className="text-blue-600 hover:text-blue-900 mr-4 disabled:opacity-50"
+                        className="text-gray-900 hover:text-gray-700 mr-4 disabled:opacity-50"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => handleAssignAgents(user)}
                         disabled={user.role === 'SUPERADMIN' && !isSuperAdmin()}
-                        className="text-indigo-600 hover:text-indigo-900 mr-4 disabled:opacity-50"
+                        className="text-gray-900 hover:text-gray-700 mr-4 disabled:opacity-50"
                       >
                         Assign Agents
                       </button>
                       <button
                         onClick={() => handleDelete(user.id)}
                         disabled={user.role === 'SUPERADMIN'}
-                        className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                        className="text-gray-900 hover:text-gray-700 disabled:opacity-50"
                       >
                         Delete
                       </button>
@@ -390,7 +390,7 @@ function UserModal({ user, onClose, onSave }) {
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50"
             >
               {loading ? 'Saving...' : 'Save'}
             </button>
@@ -558,8 +558,8 @@ function AgentAssignmentModal({ user, onClose }) {
                           disabled={isSaving}
                           className={`px-3 py-1 rounded-lg border text-sm ${
                             isAssigned
-                              ? 'border-red-200 text-red-600 hover:bg-red-50'
-                              : 'border-green-200 text-green-700 hover:bg-green-50'
+                              ? 'border-gray-900 bg-gray-900 text-white hover:bg-gray-800'
+                              : 'border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white'
                           } disabled:opacity-60`}
                         >
                           {isSaving ? 'Saving...' : isAssigned ? 'Unassign' : 'Assign'}

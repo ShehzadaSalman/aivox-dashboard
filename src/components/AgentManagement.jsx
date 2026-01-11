@@ -157,7 +157,7 @@ function AgentManagement() {
                   {superAdmin && (
                     <button
                       onClick={() => handleDelete(agent.agent_id)}
-                      className="px-3 py-1.5 text-sm font-medium text-red-600 border border-red-200 rounded-full hover:bg-red-50"
+                      className="px-3 py-1.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-full hover:bg-gray-50"
                     >
                       Delete
                     </button>
@@ -312,7 +312,7 @@ function AgentModal({ agent, onClose, onSave }) {
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50"
             >
               {loading ? 'Saving...' : 'Save'}
             </button>

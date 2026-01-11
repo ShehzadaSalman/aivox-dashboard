@@ -167,7 +167,7 @@ function CallManagement() {
                     <td className="px-6 py-4 text-sm font-medium whitespace-nowrap">
                       <button
                         onClick={() => setSelectedCall(call)}
-                        className="text-blue-600 hover:text-blue-900"
+                        className="text-gray-900 hover:text-gray-700"
                       >
                         View
                       </button>
@@ -319,7 +319,7 @@ function CallDetailsModal({ call, onClose }) {
               <a
                 href={call.recording_url}
                 download
-                className="inline-flex items-center justify-center px-4 py-2 text-white rounded-lg bg-emerald-600 hover:bg-emerald-700"
+                className="inline-flex items-center justify-center px-4 py-2 text-white rounded-lg bg-gray-900 hover:bg-gray-800"
               >
                 Download
               </a>

@@ -44,7 +44,7 @@ function Dashboard() {
                   to={link.path}
                   className={`px-4 py-2 rounded-lg transition flex items-center gap-2 ${
                     location.pathname === link.path
-                      ? "bg-blue-600 text-white"
+                      ? "bg-gray-900 text-white"
                       : "text-gray-700 hover:bg-gray-200"
                   }`}
                 >
@@ -57,7 +57,7 @@ function Dashboard() {
               </div>
               <button
                 onClick={logout}
-                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+                className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition"
               >
                 Logout
               </button>
@@ -89,7 +89,7 @@ function Dashboard() {
                   to={link.path}
                   className={`block px-4 py-2 rounded-lg transition ${
                     location.pathname === link.path
-                      ? "bg-blue-600 text-white"
+                      ? "bg-gray-900 text-white"
                       : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
@@ -102,7 +102,7 @@ function Dashboard() {
               </div>
               <button
                 onClick={logout}
-                className="w-full px-4 py-2 text-left bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+                className="w-full px-4 py-2 text-left bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition"
               >
                 Logout
               </button>

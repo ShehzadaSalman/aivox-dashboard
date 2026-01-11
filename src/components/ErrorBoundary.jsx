@@ -28,7 +28,7 @@ class ErrorBoundary extends React.Component {
                 this.setState({ hasError: false, error: null });
                 window.location.reload();
               }}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
             >
               Reload Page
             </button>
@@ -42,4 +42,3 @@ class ErrorBoundary extends React.Component {
 }
 
 export default ErrorBoundary;
-
