@@ -14,9 +14,9 @@ function AnalyticsAgents() {
 
   const fetchAgentNames = async () => {
     try {
-      const response = await agentAPI.list();
+      const response = await agentAPI.list({ includeCount: false });
       const nameMap = {};
-      response.data.forEach((agent) => {
+      (response.data.agents || []).forEach((agent) => {
         if (agent.agent_id && agent.agent_name) {
           nameMap[agent.agent_id] = agent.agent_name;
         }

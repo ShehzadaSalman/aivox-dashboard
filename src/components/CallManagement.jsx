@@ -20,13 +20,13 @@ function CallManagement() {
   const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
-    fetchAgents();
+     fetchAgents();
     fetchCalls();
   }, [filters, pagination.offset]);
 
   const fetchAgents = async () => {
     try {
-      const response = await agentAPI.list({ limit: 100 });
+      const response = await agentAPI.list({ limit: 100, includeCount: false });
       setAgents(response.data.agents);
     } catch (err) {
       console.error('Failed to fetch agents:', err);
@@ -40,6 +40,7 @@ function CallManagement() {
         limit: pagination.limit,
         offset: pagination.offset,
         sortBy: filters.sortBy,
+        includeCount: false,
         ...(filters.agentId && { agentId: filters.agentId }),
         ...(filters.callStatus && { callStatus: filters.callStatus }),
       };
@@ -145,7 +146,7 @@ function CallManagement() {
 
       {/* Calls Table */}
       {loading ? (
-        <div className="py-12 text-center">Loading calls...</div>
+        <CallsSkeleton />
       ) : error ? (
           <div className="p-4 border border-red-200 rounded-lg bg-red-50">
           <p className="text-red-600">Error: {error}</p>
@@ -211,9 +212,13 @@ function CallManagement() {
           {/* Pagination */}
               <div className="flex items-center justify-between">
             <div className="text-sm text-gray-700">
-              Showing {pagination.offset + 1} to{' '}
-              {Math.min(pagination.offset + pagination.limit, pagination.total)} of{' '}
-              {pagination.total} calls
+                  Showing {calls.length === 0 ? 0 : pagination.offset + 1} to{' '}
+                  {pagination.total === null || pagination.total === undefined
+                    ? pagination.offset + calls.length
+                    : Math.min(pagination.offset + pagination.limit, pagination.total)}
+                  {pagination.total === null || pagination.total === undefined
+                    ? ' calls'
+                    : ` of ${pagination.total} calls`}
             </div>
             <div className="flex gap-2">
               <button
@@ -380,6 +385,28 @@ function CallDetailsModal({ call, onClose }) {
             </div>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function CallsSkeleton() {
+  return (
+    <div className="overflow-hidden bg-white rounded-lg shadow animate-pulse">
+      <div className="p-4 border-b border-gray-200">
+        <div className="w-40 h-4 bg-gray-200 rounded" />
+      </div>
+      <div className="divide-y divide-gray-200">
+        {Array.from({ length: 8 }).map((_, index) => (
+          <div key={index} className="grid grid-cols-6 gap-4 px-6 py-4">
+            <div className="h-4 col-span-1 bg-gray-200 rounded" />
+            <div className="h-4 col-span-1 bg-gray-200 rounded" />
+            <div className="h-4 col-span-1 bg-gray-200 rounded" />
+            <div className="h-4 col-span-1 bg-gray-200 rounded" />
+            <div className="h-4 col-span-1 bg-gray-200 rounded" />
+            <div className="h-4 col-span-1 bg-gray-200 rounded" />
+          </div>
+        ))}
       </div>
     </div>
   );

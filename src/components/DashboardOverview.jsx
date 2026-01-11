@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { utilityAPI, analyticsAPI, agentAPI, callAPI } from '../services/api';
+import { utilityAPI, agentAPI, callAPI } from '../services/api';
 import { formatUSD } from '../services/currency';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -20,12 +20,9 @@ function DashboardOverview() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [statsData, analyticsData] = await Promise.all([
-        utilityAPI.getStats(),
-        analyticsAPI.getOverview(),
-      ]);
-      setStats(statsData.data);
-      setAnalytics(analyticsData.data);
+      const response = await utilityAPI.getDashboardOverview();
+      setStats(response.data.stats);
+      setAnalytics(response.data.analytics);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -48,11 +45,7 @@ function DashboardOverview() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-gray-500">Loading dashboard...</div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (error) {
@@ -161,20 +154,6 @@ function DashboardOverview() {
         </div>
       )}
 
-      {/* Call Status Breakdown */}
-      {analytics?.callsByStatus && Object.keys(analytics.callsByStatus).length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Calls by Status</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {Object.entries(analytics.callsByStatus).map(([status, count]) => (
-              <div key={status} className="text-center p-4 bg-gray-50 rounded-lg">
-                <div className="text-2xl font-bold text-gray-900">{count}</div>
-                <div className="text-sm text-gray-600 capitalize">{status}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -195,6 +174,46 @@ function StatCard({ title, value, subtitle, icon, color }) {
       </div>
       <div className="text-3xl font-bold text-gray-900 mb-1">{value}</div>
       <div className="text-sm text-gray-500">{subtitle}</div>
+    </div>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <div className="h-7 w-48 bg-gray-200 rounded mb-2" />
+          <div className="h-4 w-64 bg-gray-200 rounded" />
+        </div>
+        <div className="h-10 w-44 bg-gray-200 rounded" />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div key={index} className="bg-white rounded-lg shadow p-6">
+            <div className="h-4 w-24 bg-gray-200 rounded mb-3" />
+            <div className="h-8 w-24 bg-gray-200 rounded mb-2" />
+            <div className="h-3 w-28 bg-gray-200 rounded" />
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {Array.from({ length: 2 }).map((_, index) => (
+          <div key={index} className="bg-white rounded-lg shadow p-6">
+            <div className="h-5 w-40 bg-gray-200 rounded mb-4" />
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((__, rowIndex) => (
+                <div key={rowIndex} className="flex justify-between items-center">
+                  <div className="h-3 w-32 bg-gray-200 rounded" />
+                  <div className="h-3 w-16 bg-gray-200 rounded" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

@@ -17,6 +17,7 @@ function Leads() {
       setErrorMessage("");
       try {
         const params = {};
+        params.includeCount = false;
         if (statusFilter !== "all") {
           params.status = statusFilter;
         }
@@ -128,9 +129,7 @@ function Leads() {
       </div>
 
       {loading ? (
-        <div className="bg-white rounded-lg shadow p-6 text-center text-gray-500">
-          Loading leads...
-        </div>
+        <LeadsSkeleton />
       ) : errorMessage ? (
         <div className="bg-white rounded-lg shadow p-6 text-center text-red-600">
           {errorMessage}
@@ -230,6 +229,28 @@ function Leads() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function LeadsSkeleton() {
+  return (
+    <div className="bg-white rounded-lg shadow overflow-hidden animate-pulse">
+      <div className="p-4 border-b border-gray-200">
+        <div className="h-4 w-40 bg-gray-200 rounded" />
+      </div>
+      <div className="divide-y divide-gray-200">
+        {Array.from({ length: 8 }).map((_, index) => (
+          <div key={index} className="px-6 py-4 grid grid-cols-6 gap-4">
+            <div className="h-4 bg-gray-200 rounded col-span-1" />
+            <div className="h-4 bg-gray-200 rounded col-span-1" />
+            <div className="h-4 bg-gray-200 rounded col-span-1" />
+            <div className="h-4 bg-gray-200 rounded col-span-1" />
+            <div className="h-4 bg-gray-200 rounded col-span-1" />
+            <div className="h-4 bg-gray-200 rounded col-span-1" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

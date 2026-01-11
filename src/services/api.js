@@ -257,6 +257,10 @@ export const userAPI = {
 
 // Utility APIs
 export const utilityAPI = {
+  getDashboardOverview: async () => {
+    return apiRequest("/api/dashboard/overview");
+  },
+
   getStats: async () => {
     return apiRequest("/api/dashboard/stats");
   },

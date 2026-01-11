@@ -1,4 +1,5 @@
 import { Routes, Route, Link, useLocation, Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import DashboardOverview from "./DashboardOverview";
 import AgentManagement from "./AgentManagement";
@@ -11,6 +12,7 @@ import UserManagement from "./UserManagement";
 function Dashboard() {
   const location = useLocation();
   const { logout, user, isAdmin } = useAuth();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const navLinks = [
     { path: "/dashboard", label: "Overview", icon: "📊" },
@@ -24,6 +26,10 @@ function Dashboard() {
     navLinks.push({ path: "/dashboard/users", label: "Users", icon: "👤" });
   }
 
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
+
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Navigation Bar */}
@@ -33,7 +39,7 @@ function Dashboard() {
             <div className="flex items-center">
               <img src="/logo.svg" alt="AI Vox Agency" className="h-10" />
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="hidden md:flex items-center space-x-4">
               {navLinks.map((link) => (
                 <Link
                   key={link.path}
@@ -58,8 +64,53 @@ function Dashboard() {
                 Logout
               </button>
             </div>
+            <div className="flex items-center md:hidden">
+              <button
+                type="button"
+                onClick={() => setMobileOpen((open) => !open)}
+                className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:bg-gray-100"
+                aria-controls="mobile-menu"
+                aria-expanded={mobileOpen}
+              >
+                <span className="sr-only">Toggle navigation</span>
+                {mobileOpen ? (
+                  <span className="text-2xl">×</span>
+                ) : (
+                  <span className="text-2xl">☰</span>
+                )}
+              </button>
+            </div>
           </div>
         </div>
+        {mobileOpen && (
+          <div id="mobile-menu" className="md:hidden border-t border-gray-200">
+            <div className="px-4 pt-4 pb-3 space-y-2">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={`block px-4 py-2 rounded-lg transition ${
+                    location.pathname === link.path
+                      ? "bg-blue-600 text-white"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  <span className="mr-2">{link.icon}</span>
+                  <span>{link.label}</span>
+                </Link>
+              ))}
+              <div className="px-4 py-2 text-sm text-gray-600">
+                {user?.email}
+              </div>
+              <button
+                onClick={logout}
+                className="w-full px-4 py-2 text-left bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Main Content */}

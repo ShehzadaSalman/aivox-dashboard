@@ -21,6 +21,7 @@ function AgentManagement() {
       const params = {
         limit: pagination.limit,
         offset: pagination.offset,
+        includeCount: false,
         ...(filters.status && { status: filters.status }),
         ...(filters.search && { search: filters.search }),
       };
@@ -128,7 +129,7 @@ function AgentManagement() {
 
       {/* Agents Table */}
       {loading ? (
-        <div className="text-center py-12">Loading agents...</div>
+        <AgentsSkeleton />
       ) : error ? (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-600">Error: {error}</p>
@@ -208,9 +209,13 @@ function AgentManagement() {
           {/* Pagination */}
           <div className="flex justify-between items-center">
             <div className="text-sm text-gray-700">
-              Showing {pagination.offset + 1} to{' '}
-              {Math.min(pagination.offset + pagination.limit, pagination.total)} of{' '}
-              {pagination.total} agents
+              Showing {agents.length === 0 ? 0 : pagination.offset + 1} to{' '}
+              {pagination.total === null || pagination.total === undefined
+                ? pagination.offset + agents.length
+                : Math.min(pagination.offset + pagination.limit, pagination.total)}
+              {pagination.total === null || pagination.total === undefined
+                ? ' agents'
+                : ` of ${pagination.total} agents`}
             </div>
             <div className="flex gap-2">
               <button
@@ -357,5 +362,26 @@ function AgentModal({ agent, onClose, onSave }) {
   );
 }
 
-export default AgentManagement;
+function AgentsSkeleton() {
+  return (
+    <div className="bg-white rounded-lg shadow overflow-hidden animate-pulse">
+      <div className="p-4 border-b border-gray-200">
+        <div className="h-4 w-40 bg-gray-200 rounded" />
+      </div>
+      <div className="divide-y divide-gray-200">
+        {Array.from({ length: 8 }).map((_, index) => (
+          <div key={index} className="px-6 py-4 grid grid-cols-6 gap-4">
+            <div className="h-4 bg-gray-200 rounded col-span-1" />
+            <div className="h-4 bg-gray-200 rounded col-span-1" />
+            <div className="h-4 bg-gray-200 rounded col-span-1" />
+            <div className="h-4 bg-gray-200 rounded col-span-1" />
+            <div className="h-4 bg-gray-200 rounded col-span-1" />
+            <div className="h-4 bg-gray-200 rounded col-span-1" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
+export default AgentManagement;
