@@ -227,43 +227,47 @@ function Login() {
         </form>
 
         {verificationEmail && (
-          <form onSubmit={handleVerifyPhone} className="mt-6 space-y-4">
-            <div className="text-sm text-center text-gray-600">
-              Enter the verification code sent to your phone.
-            </div>
-            <div>
-              <label
-                htmlFor="verificationCode"
-                className="block mb-2 text-sm font-medium text-gray-700"
+          <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50/60 p-5">
+            <div className="text-sm font-semibold text-amber-900">Step 2: Verify your phone</div>
+            <p className="mt-1 text-sm text-amber-800">
+              Enter the verification code below (not in the login form). We sent it to the phone on
+              your signup.
+            </p>
+            <form onSubmit={handleVerifyPhone} className="mt-4 space-y-4">
+              <div>
+                <label
+                  htmlFor="verificationCode"
+                  className="block mb-2 text-sm font-medium text-gray-700"
+                >
+                  Verification Code
+                </label>
+                <input
+                  id="verificationCode"
+                  type="text"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value)}
+                  className="w-full px-4 py-2 transition border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  placeholder="Enter the 6-digit code"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={verificationLoading}
+                className="w-full px-4 py-2 font-medium text-white transition duration-200 bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Verification Code
-              </label>
-              <input
-                id="verificationCode"
-                type="text"
-                value={verificationCode}
-                onChange={(e) => setVerificationCode(e.target.value)}
-                className="w-full px-4 py-2 transition border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                placeholder="Enter the 6-digit code"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={verificationLoading}
-              className="w-full px-4 py-2 font-medium text-white transition duration-200 bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {verificationLoading ? "Verifying..." : "Verify Phone"}
-            </button>
-            <button
-              type="button"
-              onClick={handleResendCode}
-              disabled={verificationLoading}
-              className="w-full text-gray-900 underline hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Resend verification code
-            </button>
-          </form>
+                {verificationLoading ? "Verifying..." : "Verify Phone"}
+              </button>
+              <button
+                type="button"
+                onClick={handleResendCode}
+                disabled={verificationLoading}
+                className="w-full text-gray-900 underline hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Resend verification code
+              </button>
+            </form>
+          </div>
         )}
 
         <div className="mt-6 text-sm text-center text-gray-600">
