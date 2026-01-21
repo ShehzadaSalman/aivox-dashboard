@@ -13,6 +13,12 @@ const getAuthToken = () => {
   return null;
 };
 
+const notifyUnauthorized = () => {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent("auth:unauthorized"));
+  }
+};
+
 // Helper function to get API key from localStorage
 const getApiKey = () => {
   if (typeof window !== 'undefined') {
@@ -47,7 +53,12 @@ const apiRequest = async (endpoint, options = {}) => {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || "An error occurred");
+      if (response.status === 401 || response.status === 403) {
+        notifyUnauthorized();
+      }
+      const error = new Error(data.message || "An error occurred");
+      error.status = response.status;
+      throw error;
     }
 
     return data;

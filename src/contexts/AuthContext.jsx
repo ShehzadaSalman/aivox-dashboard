@@ -2,13 +2,31 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import { authAPI } from '../services/api';
 
 const AuthContext = createContext(null);
+const AUTH_TOKEN_KEY = 'authToken';
+const AUTH_USER_KEY = 'authUser';
+
+const getStoredUser = () => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  const storedUser = localStorage.getItem(AUTH_USER_KEY);
+  if (!storedUser) {
+    return null;
+  }
+  try {
+    return JSON.parse(storedUser);
+  } catch (error) {
+    localStorage.removeItem(AUTH_USER_KEY);
+    return null;
+  }
+};
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => getStoredUser());
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('authToken');
+      return localStorage.getItem(AUTH_TOKEN_KEY);
     }
     return null;
   });
@@ -17,13 +35,18 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await authAPI.getMe();
       setUser(response.data);
-    } catch (error) {
-      // Token might be invalid, clear it
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('authToken');
+        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(response.data));
       }
-      setToken(null);
-      setUser(null);
+    } catch (error) {
+      if (error?.status === 401 || error?.status === 403) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem(AUTH_TOKEN_KEY);
+          localStorage.removeItem(AUTH_USER_KEY);
+        }
+        setToken(null);
+        setUser(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -43,7 +66,7 @@ export const AuthProvider = ({ children }) => {
       const response = await authAPI.login(email, password);
       if (response.success && response.token) {
         if (typeof window !== 'undefined') {
-          localStorage.setItem('authToken', response.token);
+          localStorage.setItem(AUTH_TOKEN_KEY, response.token);
         }
         setToken(response.token);
         await fetchUser();
@@ -61,7 +84,7 @@ export const AuthProvider = ({ children }) => {
       if (response.success) {
         if (response.token) {
           if (typeof window !== 'undefined') {
-            localStorage.setItem('authToken', response.token);
+            localStorage.setItem(AUTH_TOKEN_KEY, response.token);
           }
           setToken(response.token);
           await fetchUser();
@@ -97,13 +120,24 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
+  const logout = useCallback(() => {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('authToken');
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+      localStorage.removeItem(AUTH_USER_KEY);
     }
     setToken(null);
     setUser(null);
-  };
+  }, []);
+
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      logout();
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('auth:unauthorized', handleUnauthorized);
+      return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
+    }
+  }, [logout]);
 
   const isAdmin = () => {
     return user?.role === 'ADMIN' || user?.role === 'SUPERADMIN';
@@ -123,7 +157,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     isAdmin,
     isSuperAdmin,
-    isAuthenticated: !!user,
+    isAuthenticated: !!token,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
