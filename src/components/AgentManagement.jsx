@@ -148,12 +148,6 @@ function AgentManagement() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleEdit(agent)}
-                    className="px-3 py-1.5 text-sm font-medium text-gray-700 border border-gray-200 rounded-full hover:bg-gray-50"
-                  >
-                    Edit
-                  </button>
                   {superAdmin && (
                     <button
                       onClick={() => handleDelete(agent.agent_id)}

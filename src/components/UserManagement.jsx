@@ -129,7 +129,8 @@ function UserManagement() {
       ) : (
         <>
           <div className="bg-white rounded-lg shadow overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
+            <div className="overflow-x-auto">
+              <table className="min-w-[900px] w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
@@ -233,15 +234,16 @@ function UserManagement() {
                       <button
                         onClick={() => handleDelete(user.id)}
                         disabled={user.role === 'SUPERADMIN'}
-                        className="text-gray-900 hover:text-gray-700 disabled:opacity-50"
+                        className="text-rose-600 hover:text-rose-700 disabled:opacity-50"
                       >
-                        Delete
+                        Remove
                       </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
-            </table>
+              </table>
+            </div>
           </div>
 
           {/* Pagination */}
