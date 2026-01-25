@@ -255,6 +255,10 @@ export const utilityAPI = {
     return apiRequest("/api/dashboard/overview");
   },
 
+  getPlanUsage: async () => {
+    return apiRequest("/api/dashboard/plan-usage");
+  },
+
   getStats: async () => {
     return apiRequest("/api/dashboard/stats");
   },

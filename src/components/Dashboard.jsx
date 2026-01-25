@@ -1,5 +1,5 @@
 import { Routes, Route, Link, useLocation, Navigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import DashboardOverview from "./DashboardOverview";
 import AgentManagement from "./AgentManagement";
@@ -7,11 +7,15 @@ import CallManagement from "./CallManagement";
 import Leads from "./Leads";
 import Analytics from "./Analytics";
 import UserManagement from "./UserManagement";
+import Profile from "./Profile";
+import Settings from "./Settings";
 
 function Dashboard() {
   const location = useLocation();
   const { logout, user, isAdmin } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef(null);
 
   const navLinks = [
     { path: "/dashboard", label: "Overview", icon: "📊" },
@@ -26,7 +30,23 @@ function Dashboard() {
 
   useEffect(() => {
     setMobileOpen(false);
+    setUserMenuOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (!userMenuOpen) {
+      return undefined;
+    }
+    const handleClickOutside = (event) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [userMenuOpen]);
+
+  const userInitial = user?.name?.trim()?.[0] || user?.email?.[0] || "U";
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -52,15 +72,40 @@ function Dashboard() {
                   <span>{link.label}</span>
                 </Link>
               ))}
-              <div className="px-4 py-2 ml-4 text-sm text-gray-600">
-                {user?.email}
+              <div className="relative ml-4" ref={userMenuRef}>
+                <button
+                  onClick={() => setUserMenuOpen((open) => !open)}
+                  className="flex items-center gap-3 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 shadow-sm hover:bg-gray-50"
+                >
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-900 text-white">
+                    {userInitial.toUpperCase()}
+                  </span>
+                  <span className="hidden lg:inline">{user?.email}</span>
+                  <span className="text-xs">▾</span>
+                </button>
+                {userMenuOpen && (
+                  <div className="absolute right-0 z-10 mt-2 w-48 rounded-lg border border-gray-200 bg-white shadow-lg">
+                    <Link
+                      to="/dashboard/profile"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Profile
+                    </Link>
+                    <Link
+                      to="/dashboard/settings"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Settings
+                    </Link>
+                    <button
+                      onClick={logout}
+                      className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
               </div>
-              <button
-                onClick={logout}
-                className="px-4 py-2 text-white transition bg-gray-900 rounded-lg hover:bg-gray-800"
-              >
-                Logout
-              </button>
             </div>
             <div className="flex items-center md:hidden">
               <button
@@ -97,9 +142,19 @@ function Dashboard() {
                   <span>{link.label}</span>
                 </Link>
               ))}
-              <div className="px-4 py-2 text-sm text-gray-600">
-                {user?.email}
-              </div>
+              <Link
+                to="/dashboard/profile"
+                className="block px-4 py-2 rounded-lg transition text-gray-700 hover:bg-gray-100"
+              >
+                👤 Profile
+              </Link>
+              <Link
+                to="/dashboard/settings"
+                className="block px-4 py-2 rounded-lg transition text-gray-700 hover:bg-gray-100"
+              >
+                ⚙️ Settings
+              </Link>
+              <div className="px-4 py-2 text-sm text-gray-600">{user?.email}</div>
               <button
                 onClick={logout}
                 className="w-full px-4 py-2 text-left text-white transition bg-gray-900 rounded-lg hover:bg-gray-800"
@@ -119,6 +174,8 @@ function Dashboard() {
           <Route path="/calls" element={<CallManagement />} />
           <Route path="/leads" element={<Leads />} />
           <Route path="/analytics/*" element={<Analytics />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<Settings />} />
           {isAdmin() && <Route path="/users" element={<UserManagement />} />}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
