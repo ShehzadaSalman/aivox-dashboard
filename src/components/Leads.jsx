@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { leadAPI } from "../services/api";
+import { calcomAPI, integrationAPI, leadAPI } from "../services/api";
+import { DEFAULT_CAL_CONFIG, normalizeCalConfig } from "../utils/calConfig";
 
 function Leads() {
   const [statusFilter, setStatusFilter] = useState("all");
@@ -8,6 +9,17 @@ function Leads() {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [deletingId, setDeletingId] = useState(null);
+  const [calConfig, setCalConfig] = useState(DEFAULT_CAL_CONFIG);
+  const [appointmentLead, setAppointmentLead] = useState(null);
+  const [appointmentForm, setAppointmentForm] = useState({
+    eventTypeId: "",
+    start: "",
+    timezone: "",
+    attendeeName: "",
+    attendeeEmail: "",
+  });
+  const [appointmentError, setAppointmentError] = useState("");
+  const [appointmentSaving, setAppointmentSaving] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -40,6 +52,7 @@ function Leads() {
           visitTime: lead.visit_time
             ? new Date(lead.visit_time).toLocaleString()
             : lead.visitTime || "",
+          visitTimeRaw: lead.visit_time || lead.visitTime || "",
         }));
 
         if (isMounted) {
@@ -63,6 +76,28 @@ function Leads() {
       isMounted = false;
     };
   }, [statusFilter]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadIntegration = async () => {
+      try {
+        const response = await integrationAPI.get("calcom");
+        if (!isMounted) {
+          return;
+        }
+        const integration = response?.data || null;
+        setCalConfig(normalizeCalConfig(integration?.config));
+      } catch {
+        if (isMounted) {
+          setCalConfig(DEFAULT_CAL_CONFIG);
+        }
+      }
+    };
+    loadIntegration();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const filteredLeads = useMemo(() => {
     const normalizedAgentFilter = agentFilter.trim().toLowerCase();
@@ -93,6 +128,89 @@ function Leads() {
       setErrorMessage(error.message || "Failed to delete lead.");
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const openAppointmentModal = (lead) => {
+    const visitDate = lead.visitTimeRaw ? new Date(lead.visitTimeRaw) : null;
+    const hasValidVisit = visitDate && !Number.isNaN(visitDate.getTime());
+    const startIso = hasValidVisit ? visitDate.toISOString() : "";
+    setAppointmentLead(lead);
+    setAppointmentError("");
+    setAppointmentForm({
+      eventTypeId: calConfig.eventTypeId || "",
+      start: startIso,
+      timezone:
+        calConfig.timeZone ||
+        Intl.DateTimeFormat().resolvedOptions().timeZone ||
+        "",
+      attendeeName: lead.name || "",
+      attendeeEmail: lead.email || "",
+    });
+  };
+
+  const closeAppointmentModal = () => {
+    if (appointmentSaving) {
+      return;
+    }
+    setAppointmentLead(null);
+  };
+
+  const handleAppointmentChange = (field, value) => {
+    setAppointmentForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleCreateAppointment = async () => {
+    if (!appointmentLead) {
+      return;
+    }
+    setAppointmentError("");
+
+    const { eventTypeId, start, attendeeName, attendeeEmail, timezone } =
+      appointmentForm;
+
+    if (!eventTypeId.trim()) {
+      setAppointmentError("Event Type ID is required.");
+      return;
+    }
+    if (!start) {
+      setAppointmentError("Start time is required.");
+      return;
+    }
+    if (!timezone.trim()) {
+      setAppointmentError("Timezone is required.");
+      return;
+    }
+    if (!attendeeName.trim() || !attendeeEmail.trim()) {
+      setAppointmentError("Attendee name and email are required.");
+      return;
+    }
+
+    setAppointmentSaving(true);
+    try {
+      const payload = {
+        eventTypeId: eventTypeId.trim(),
+        start,
+        attendee: {
+          name: attendeeName.trim(),
+          email: attendeeEmail.trim(),
+          timeZone: timezone.trim(),
+        },
+        metadata: {
+          leadId: appointmentLead.id,
+          phone: appointmentLead.phone || undefined,
+          address: appointmentLead.address || undefined,
+          reason: appointmentLead.reason || undefined,
+          company: appointmentLead.company || undefined,
+          agentId: appointmentLead.agentId || undefined,
+        },
+      };
+      await calcomAPI.reserveSlot(payload);
+      setAppointmentLead(null);
+    } catch (error) {
+      setAppointmentError(error.message || "Failed to create appointment.");
+    } finally {
+      setAppointmentSaving(false);
     }
   };
 
@@ -213,19 +331,164 @@ function Leads() {
                     {lead.createdAt}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(lead.id)}
-                      disabled={deletingId === lead.id}
-                      className="text-gray-900 hover:text-gray-700 disabled:opacity-50"
-                    >
-                      {deletingId === lead.id ? "Deleting..." : "Delete"}
-                    </button>
+                    <div className="flex items-center justify-end gap-3">
+                      <button
+                        type="button"
+                        onClick={() => openAppointmentModal(lead)}
+                        className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-100"
+                      >
+                        Create Appointment
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(lead.id)}
+                        disabled={deletingId === lead.id}
+                        className="text-gray-900 hover:text-gray-700 disabled:opacity-50"
+                      >
+                        {deletingId === lead.id ? "Deleting..." : "Delete"}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {appointmentLead && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 px-4">
+          <div className="w-full max-w-2xl rounded-xl bg-white p-6 shadow-xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Create Appointment
+                </h2>
+                <p className="text-sm text-gray-600">
+                  Schedule {appointmentLead.name} using Cal.com.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeAppointmentModal}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+
+            {appointmentError && (
+              <div className="mt-4 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">
+                {appointmentError}
+              </div>
+            )}
+
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Event Type ID
+                </label>
+                <input
+                  type="text"
+                  value={appointmentForm.eventTypeId}
+                  onChange={(event) =>
+                    handleAppointmentChange("eventTypeId", event.target.value)
+                  }
+                  placeholder="123456"
+                  readOnly={Boolean(calConfig.eventTypeId)}
+                  disabled={Boolean(calConfig.eventTypeId)}
+                  className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
+                />
+                {calConfig.eventTypeId && (
+                  <p className="mt-2 text-xs text-gray-500">
+                    Managed from Profile → Integrations.
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Timezone
+                </label>
+                <input
+                  type="text"
+                  value={appointmentForm.timezone}
+                  onChange={(event) =>
+                    handleAppointmentChange("timezone", event.target.value)
+                  }
+                  placeholder="America/Los_Angeles"
+                  required
+                  className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Start time
+                </label>
+                <input
+                  type="datetime-local"
+                  value={toLocalInputValue(appointmentForm.start)}
+                  min={toLocalInputValue(new Date().toISOString())}
+                  onChange={(event) =>
+                    handleAppointmentChange(
+                      "start",
+                      toIsoFromLocal(event.target.value)
+                    )
+                  }
+                  className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
+                />
+                <p className="mt-2 text-xs text-gray-500">
+                  {appointmentForm.start
+                    ? formatReadableStart(appointmentForm.start)
+                    : "Select a future time for this appointment."}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Attendee Name
+                </label>
+                <input
+                  type="text"
+                  value={appointmentForm.attendeeName}
+                  onChange={(event) =>
+                    handleAppointmentChange("attendeeName", event.target.value)
+                  }
+                  className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Attendee Email
+                </label>
+                <input
+                  type="email"
+                  value={appointmentForm.attendeeEmail}
+                  onChange={(event) =>
+                    handleAppointmentChange("attendeeEmail", event.target.value)
+                  }
+                  className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={closeAppointmentModal}
+                className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100"
+                disabled={appointmentSaving}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleCreateAppointment}
+                className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50"
+                disabled={appointmentSaving}
+              >
+                {appointmentSaving ? "Creating..." : "Create Appointment"}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -253,6 +516,41 @@ function LeadsSkeleton() {
       </div>
     </div>
   );
+}
+
+function toLocalInputValue(value) {
+  if (!value) {
+    return "";
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+  const tzOffset = date.getTimezoneOffset() * 60000;
+  const local = new Date(date.getTime() - tzOffset);
+  return local.toISOString().slice(0, 16);
+}
+
+function toIsoFromLocal(value) {
+  if (!value) {
+    return "";
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+  return date.toISOString();
+}
+
+function formatReadableStart(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "Invalid date";
+  }
+  return date.toLocaleString(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
 }
 
 export default Leads;

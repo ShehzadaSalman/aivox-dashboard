@@ -200,6 +200,35 @@ export const analyticsAPI = {
   },
 };
 
+// Cal.com APIs
+export const calcomAPI = {
+  reserveSlot: async (payload) => {
+    return apiRequest("/api/slots/reserve", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+  listBookings: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const suffix = queryString ? `?${queryString}` : "";
+    return apiRequest(`/api/bookings${suffix}`);
+  },
+};
+
+// Integration APIs
+export const integrationAPI = {
+  get: async (provider) => {
+    return apiRequest(`/api/dashboard/integrations/${provider}`);
+  },
+
+  update: async (provider, payload) => {
+    return apiRequest(`/api/dashboard/integrations/${provider}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  },
+};
+
 // User Management APIs (Admin only)
 export const userAPI = {
   list: async (params = {}) => {
@@ -283,6 +312,8 @@ export default {
   call: callAPI,
   lead: leadAPI,
   analytics: analyticsAPI,
+  integration: integrationAPI,
+  calcom: calcomAPI,
   user: userAPI,
   utility: utilityAPI,
   search: searchAPI,
