@@ -1,40 +1,41 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { agentAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
 function AgentManagement() {
   const { isSuperAdmin } = useAuth();
-  const [agents, setAgents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [pagination, setPagination] = useState({ total: 0, limit: 20, offset: 0, hasMore: false });
-  const [filters, setFilters] = useState({ status: '', search: '' });
+  const [pagination, setPagination] = useState({ limit: 20, offset: 0 });
+  const [filters, setFilters] = useState({ search: '' });
   const [showModal, setShowModal] = useState(false);
   const [editingAgent, setEditingAgent] = useState(null);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    fetchAgents();
-  }, [filters, pagination.offset]);
-
-  const fetchAgents = async () => {
-    try {
-      setLoading(true);
+  const {
+    data: agentsData,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ['agents', filters.search, pagination.offset, pagination.limit],
+    queryFn: async () => {
       const params = {
         limit: pagination.limit,
         offset: pagination.offset,
         includeCount: false,
-        ...(filters.status && { status: filters.status }),
         ...(filters.search && { search: filters.search }),
       };
       const response = await agentAPI.list(params);
-      console.log('Agents data:', response.data.agents);
-      setAgents(response.data.agents);
-      setPagination(response.data.pagination);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+      return response.data;
+    },
+    keepPreviousData: true,
+  });
+
+  const agents = agentsData?.agents || [];
+  const paginationMeta = agentsData?.pagination || {
+    total: 0,
+    limit: pagination.limit,
+    offset: pagination.offset,
+    hasMore: false,
   };
 
 
@@ -44,7 +45,7 @@ function AgentManagement() {
     }
     try {
       await agentAPI.delete(agentId);
-      await fetchAgents();
+      await queryClient.invalidateQueries({ queryKey: ['agents'] });
     } catch (err) {
       alert(`Failed to delete agent: ${err.message}`);
     }
@@ -75,42 +76,24 @@ function AgentManagement() {
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Search
-            </label>
-            <input
-              type="text"
-              value={filters.search}
-              onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-              placeholder="Search by name or ID..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Status
-            </label>
-            <select
-              value={filters.status}
-              onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Statuses</option>
-              <option value="ACTIVE">Active</option>
-              <option value="INACTIVE">Inactive</option>
-            </select>
-          </div>
-        </div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Search
+        </label>
+        <input
+          type="text"
+          value={filters.search}
+          onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+          placeholder="Search by name or ID..."
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+        />
       </div>
 
       {/* Agents Cards */}
-      {loading ? (
+      {isLoading && agents.length === 0 ? (
         <AgentsSkeleton />
       ) : error ? (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-600">Error: {error}</p>
+          <p className="text-red-600">Error: {error.message || 'Failed to load agents.'}</p>
         </div>
       ) : (
         <>
@@ -165,12 +148,12 @@ function AgentManagement() {
           <div className="flex justify-between items-center">
             <div className="text-sm text-gray-700">
               Showing {agents.length === 0 ? 0 : pagination.offset + 1} to{' '}
-              {pagination.total === null || pagination.total === undefined
+              {paginationMeta.total === null || paginationMeta.total === undefined
                 ? pagination.offset + agents.length
-                : Math.min(pagination.offset + pagination.limit, pagination.total)}
-              {pagination.total === null || pagination.total === undefined
+                : Math.min(pagination.offset + pagination.limit, paginationMeta.total)}
+              {paginationMeta.total === null || paginationMeta.total === undefined
                 ? ' agents'
-                : ` of ${pagination.total} agents`}
+                : ` of ${paginationMeta.total} agents`}
             </div>
             <div className="flex gap-2">
               <button
@@ -186,7 +169,7 @@ function AgentManagement() {
                 onClick={() =>
                   setPagination({ ...pagination, offset: pagination.offset + pagination.limit })
                 }
-                disabled={!pagination.hasMore}
+                disabled={!paginationMeta.hasMore}
                 className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50"
               >
                 Next

@@ -1,52 +1,58 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { callAPI, agentAPI } from '../services/api';
 import { formatUSD } from '../services/currency';
+import { useAuth } from '../contexts/AuthContext';
 function CallManagement() {
-  const [calls, setCalls] = useState([]);
-  const [agents, setAgents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [pagination, setPagination] = useState({ total: 0, limit: 20, offset: 0, hasMore: false });
+  const [pagination, setPagination] = useState({ limit: 20, offset: 0 });
+  const { isSuperAdmin } = useAuth();
   const [filters, setFilters] = useState({
     agentId: '',
-    callStatus: '',
     sortBy: 'date',
   });
   const [selectedCall, setSelectedCall] = useState(null);
 
-  useEffect(() => {
-     fetchAgents();
-    fetchCalls();
-  }, [filters, pagination.offset]);
-
-  const fetchAgents = async () => {
-    try {
+  const { data: agentsData } = useQuery({
+    queryKey: ['agents', 'list'],
+    queryFn: async () => {
       const response = await agentAPI.list({ limit: 100, includeCount: false });
-      setAgents(response.data.agents);
-    } catch (err) {
-      console.error('Failed to fetch agents:', err);
-    }
-  };
+      return response.data;
+    },
+  });
 
-  const fetchCalls = async () => {
-    try {
-      setLoading(true);
+  const {
+    data: callsData,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: [
+      'calls',
+      filters.agentId,
+      filters.sortBy,
+      pagination.limit,
+      pagination.offset,
+    ],
+    queryFn: async () => {
       const params = {
         limit: pagination.limit,
         offset: pagination.offset,
         sortBy: filters.sortBy,
         includeCount: false,
         ...(filters.agentId && { agentId: filters.agentId }),
-        ...(filters.callStatus && { callStatus: filters.callStatus }),
       };
       const response = await callAPI.list(params);
-      setCalls(response.data.calls);
-      setPagination(response.data.pagination);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+      return response.data;
+    },
+    keepPreviousData: true,
+  });
+
+  const agents = agentsData?.agents || [];
+  const calls = callsData?.calls || [];
+  const paginationMeta = callsData?.pagination || {
+    total: 0,
+    limit: pagination.limit,
+    offset: pagination.offset,
+    hasMore: false,
   };
 
   const formatDate = (timestamp) => {
@@ -59,7 +65,7 @@ function CallManagement() {
     return `${mins}m ${secs}s`;
   };
 
-  console.log("Call history: ", calls)
+  const showAgentId = isSuperAdmin();
 
   return (
     <div className="space-y-6">
@@ -72,99 +78,74 @@ function CallManagement() {
 
       {/* Filters */}
       <div className="p-4 bg-white rounded-lg shadow">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <div>
-            <label className="block mb-2 text-sm font-medium text-gray-700">Agent</label>
-            <select
-              value={filters.agentId}
-              onChange={(e) => setFilters({ ...filters, agentId: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Agents</option>
-              {agents.map((agent) => (
-                <option key={agent.agent_id} value={agent.agent_id}>
-                  {agent.agent_name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block mb-2 text-sm font-medium text-gray-700">Status</label>
-            <input
-              type="text"
-              value={filters.callStatus}
-              onChange={(e) => setFilters({ ...filters, callStatus: e.target.value })}
-              placeholder="Filter by status..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block mb-2 text-sm font-medium text-gray-700">Sort By</label>
-            <select
-              value={filters.sortBy}
-              onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="date">Date</option>
-              <option value="duration">Duration</option>
-              <option value="cost">Cost</option>
-            </select>
-          </div>
-        </div>
+        <label className="block mb-2 text-sm font-medium text-gray-700">Agent</label>
+        <select
+          value={filters.agentId}
+          onChange={(e) => setFilters({ ...filters, agentId: e.target.value })}
+          className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">All Agents</option>
+          {agents.map((agent) => (
+            <option key={agent.agent_id} value={agent.agent_id}>
+              {agent.agent_name}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Calls Table */}
-      {loading ? (
+      {isLoading ? (
         <CallsSkeleton />
       ) : error ? (
           <div className="p-4 border border-red-200 rounded-lg bg-red-50">
-          <p className="text-red-600">Error: {error}</p>
+          <p className="text-red-600">Error: {error.message || 'Failed to load calls.'}</p>
         </div>
       ) : (
         <>
               <div className="overflow-hidden bg-white rounded-lg shadow">
-            <table className="min-w-full divide-y divide-gray-200">
+                <div className="overflow-x-auto md:overflow-x-visible">
+            <table className="min-w-full table-fixed divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
+                      <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">From</th>
                       <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Call ID</th>
-                      <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Agent</th>
-                      <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Date</th>
+                      <th className="hidden px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase sm:table-cell">Agent</th>
+                      {showAgentId && (
+                        <th className="hidden px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase lg:table-cell">Agent ID</th>
+                      )}
+                      <th className="hidden px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase md:table-cell">Date</th>
                       <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Duration</th>
-                      <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Cost</th>
-                      <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Status</th>
+                      <th className="hidden px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase md:table-cell">Cost</th>
                       <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {calls.map((call) => (
                   <tr key={call.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">
+                    <td className="px-3 py-3 text-sm text-gray-500 truncate md:whitespace-normal md:px-6">
+                      {getCallerFrom(call.caller_info)}
+                    </td>
+                    <td className="px-3 py-3 text-sm font-medium text-gray-900 truncate md:whitespace-normal md:px-6">
                       {call.call_id.substring(0, 20)}...
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
+                    <td className="hidden px-6 py-4 text-sm text-gray-500 whitespace-nowrap md:whitespace-normal sm:table-cell">
                       {call.agent?.agent_name || call.agent_id}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
+                    {showAgentId && (
+                      <td className="hidden px-6 py-4 text-sm text-gray-500 whitespace-nowrap md:whitespace-normal lg:table-cell">
+                        {call.agent_id}
+                      </td>
+                    )}
+                    <td className="hidden px-6 py-4 text-sm text-gray-500 whitespace-nowrap md:whitespace-normal md:table-cell">
                       {formatDate(call.start_timestamp)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
+                    <td className="px-3 py-3 text-sm text-gray-500 whitespace-nowrap md:whitespace-normal md:px-6">
                       {formatDuration(call.duration_seconds)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
+                    <td className="hidden px-6 py-4 text-sm text-gray-500 whitespace-nowrap md:whitespace-normal md:table-cell">
                       {formatUSD(call.cost)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                          call.call_successful
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}
-                      >
-                        {call.call_status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm font-medium whitespace-nowrap">
+                    <td className="px-3 py-3 text-sm font-medium whitespace-nowrap md:px-6">
                       <button
                         onClick={() => setSelectedCall(call)}
                         className="text-gray-900 hover:text-gray-700"
@@ -176,18 +157,19 @@ function CallManagement() {
                 ))}
               </tbody>
             </table>
+                </div>
           </div>
 
           {/* Pagination */}
               <div className="flex items-center justify-between">
             <div className="text-sm text-gray-700">
                   Showing {calls.length === 0 ? 0 : pagination.offset + 1} to{' '}
-                  {pagination.total === null || pagination.total === undefined
+                  {paginationMeta.total === null || paginationMeta.total === undefined
                     ? pagination.offset + calls.length
-                    : Math.min(pagination.offset + pagination.limit, pagination.total)}
-                  {pagination.total === null || pagination.total === undefined
+                    : Math.min(pagination.offset + pagination.limit, paginationMeta.total)}
+                  {paginationMeta.total === null || paginationMeta.total === undefined
                     ? ' calls'
-                    : ` of ${pagination.total} calls`}
+                    : ` of ${paginationMeta.total} calls`}
             </div>
             <div className="flex gap-2">
               <button
@@ -203,7 +185,7 @@ function CallManagement() {
                 onClick={() =>
                   setPagination({ ...pagination, offset: pagination.offset + pagination.limit })
                 }
-                disabled={!pagination.hasMore}
+                disabled={!paginationMeta.hasMore}
                 className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50"
               >
                 Next
@@ -249,6 +231,7 @@ function CallDetailsModal({ call, onClose }) {
   };
 
   const transcriptLines = formatTranscriptLines(call.transcript);
+  const callerInfo = parseCallerInfo(call.caller_info);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
@@ -346,15 +329,82 @@ function CallDetailsModal({ call, onClose }) {
           </div>
         )}
 
-        {call.caller_info && (
+        {callerInfo && (
           <div className="mt-4">
             <h3 className="mb-2 font-semibold text-gray-700">Caller Information</h3>
             <div className="p-4 text-sm rounded-lg bg-gray-50">
-              {call.caller_info}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <InfoRow label="From" value={callerInfo.from_number || callerInfo.from || '--'} />
+                <InfoRow label="To" value={callerInfo.to_number || callerInfo.to || '--'} />
+                <InfoRow label="Direction" value={callerInfo.direction || '--'} />
+                {callerInfo.location && <InfoRow label="Location" value={callerInfo.location} />}
+              </div>
+              <details className="mt-3 text-xs text-gray-500">
+                <summary className="cursor-pointer select-none">Raw payload</summary>
+                <pre className="mt-2 whitespace-pre-wrap break-words">
+                  {JSON.stringify(callerInfo, null, 2)}
+                </pre>
+              </details>
             </div>
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function getCallerFrom(callerInfo) {
+  if (!callerInfo) {
+    return '--';
+  }
+  if (typeof callerInfo === 'string') {
+    try {
+      const parsed = JSON.parse(callerInfo);
+      return (
+        parsed?.from_number ||
+        parsed?.caller_number ||
+        parsed?.from ||
+        parsed?.phone ||
+        '--'
+      );
+    } catch {
+      return callerInfo;
+    }
+  }
+  if (typeof callerInfo === 'object') {
+    return (
+      callerInfo?.from_number ||
+      callerInfo?.caller_number ||
+      callerInfo?.from ||
+      callerInfo?.phone ||
+      '--'
+    );
+  }
+  return '--';
+}
+
+function parseCallerInfo(callerInfo) {
+  if (!callerInfo) {
+    return null;
+  }
+  if (typeof callerInfo === 'string') {
+    try {
+      return JSON.parse(callerInfo);
+    } catch {
+      return { raw: callerInfo };
+    }
+  }
+  if (typeof callerInfo === 'object') {
+    return callerInfo;
+  }
+  return null;
+}
+
+function InfoRow({ label, value }) {
+  return (
+    <div>
+      <div className="text-xs uppercase tracking-wide text-gray-400">{label}</div>
+      <div className="text-sm font-medium text-gray-900">{value}</div>
     </div>
   );
 }

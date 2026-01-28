@@ -3,6 +3,7 @@ export const DEFAULT_CAL_CONFIG = {
   calLink: "aivox-agency/30min",
   eventTypeId: "3139330",
   timeZone: "",
+  autoCreateAppointments: false,
   layout: "month_view",
   hideEventTypeDetails: false,
   useSlotsViewOnSmallScreen: true,

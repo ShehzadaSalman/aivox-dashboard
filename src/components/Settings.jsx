@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
-import { utilityAPI } from "../services/api";
+import { integrationAPI, utilityAPI } from "../services/api";
+import { DEFAULT_CAL_CONFIG, normalizeCalConfig } from "../utils/calConfig";
 
 function Settings() {
   const [planUsage, setPlanUsage] = useState(null);
   const [planLoading, setPlanLoading] = useState(true);
   const [planError, setPlanError] = useState("");
+  const [calConfig, setCalConfig] = useState(DEFAULT_CAL_CONFIG);
+  const [calSaving, setCalSaving] = useState(false);
+  const [calError, setCalError] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -31,6 +35,50 @@ function Settings() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadIntegration = async () => {
+      setCalError("");
+      try {
+        const response = await integrationAPI.get("calcom");
+        if (!isMounted) {
+          return;
+        }
+        const integration = response?.data || null;
+        setCalConfig(normalizeCalConfig(integration?.config));
+      } catch (error) {
+        if (isMounted) {
+          setCalError(error.message || "Failed to load Cal.com settings.");
+          setCalConfig(DEFAULT_CAL_CONFIG);
+        }
+      }
+    };
+    loadIntegration();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleToggleAutoCreate = async () => {
+    const nextValue = !calConfig.autoCreateAppointments;
+    setCalConfig((prev) => ({ ...prev, autoCreateAppointments: nextValue }));
+    setCalSaving(true);
+    setCalError("");
+    try {
+      await integrationAPI.update("calcom", {
+        config: { autoCreateAppointments: nextValue },
+      });
+    } catch (error) {
+      setCalConfig((prev) => ({
+        ...prev,
+        autoCreateAppointments: !nextValue,
+      }));
+      setCalError(error.message || "Failed to update Cal.com settings.");
+    } finally {
+      setCalSaving(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -122,6 +170,35 @@ function Settings() {
           <button className="px-4 py-2 rounded-lg bg-gray-900 text-white text-sm">
             Open billing portal
           </button>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6 space-y-4">
+          <h2 className="text-lg font-semibold text-gray-900">Appointments</h2>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium text-gray-800">
+                Automate appointment creation
+              </p>
+              <p className="text-xs text-gray-500">
+                Automatically create Cal.com bookings when leads are qualified.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleToggleAutoCreate}
+              disabled={calSaving}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
+                calConfig.autoCreateAppointments ? "bg-emerald-500" : "bg-gray-300"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                  calConfig.autoCreateAppointments ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
+          {calError && <p className="text-xs text-red-600">{calError}</p>}
         </div>
       </div>
     </div>

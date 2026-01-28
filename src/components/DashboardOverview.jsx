@@ -1,50 +1,61 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  BarChart,
+  Bar,
+  CartesianGrid,
+} from 'recharts';
 import { analyticsAPI, utilityAPI } from '../services/api';
 import { formatUSD } from '../services/currency';
 import { useAuth } from '../contexts/AuthContext';
 
 function DashboardOverview() {
   const { isAdmin } = useAuth();
-  const [stats, setStats] = useState(null);
-  const [analytics, setAnalytics] = useState(null);
-  const [dailyStats, setDailyStats] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const {
+    data: overviewData,
+    isLoading: overviewLoading,
+    error: overviewError,
+  } = useQuery({
+    queryKey: ['dashboard-overview'],
+    queryFn: async () => {
+      const response = await utilityAPI.getDashboardOverview();
+      return response.data;
+    },
+  });
+  const {
+    data: callsData,
+    isLoading: callsLoading,
+    error: callsError,
+  } = useQuery({
+    queryKey: ['analytics-calls'],
+    queryFn: async () => {
+      const response = await analyticsAPI.getCalls();
+      return response.data;
+    },
+  });
+  const stats = overviewData?.stats || null;
+  const analytics = overviewData?.analytics || null;
+  const loading = overviewLoading || callsLoading;
+  const error = overviewError || callsError;
   const showCost = isAdmin();
   const totalCostCents = analytics?.totalCost ?? stats?.cost?.total ?? 0;
   const avgCostCents = analytics?.avgCost ?? 0;
   const totalCalls = analytics?.totalCalls ?? stats?.calls?.total ?? 0;
   const successfulCalls = analytics?.successfulCalls ?? 0;
   const failedCalls = Math.max(totalCalls - successfulCalls, 0);
+  const dailyStats = callsData?.dailyStats || [];
   const recentDailyStats = dailyStats.slice(-7);
-  const callTrend = recentDailyStats.length
-    ? recentDailyStats.map((entry) => entry.totalCalls)
-    : [];
-  const costTrend = recentDailyStats.length
-    ? recentDailyStats.map((entry) => entry.totalCost)
-    : Array.from({ length: 7 }, () => 0);
+  const chartData = recentDailyStats.map((entry) => ({
+    date: formatChartDate(entry.date || entry.day || entry.label),
+    calls: entry.totalCalls ?? 0,
+    cost: entry.totalCost ?? 0,
+  }));
   const statusSegments = buildStatusSegments(analytics?.callsByStatus);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const response = await utilityAPI.getDashboardOverview();
-      const callsResponse = showCost
-        ? await analyticsAPI.getCalls().catch(() => null)
-        : null;
-      setStats(response.data.stats);
-      setAnalytics(response.data.analytics);
-      setDailyStats(callsResponse?.data?.dailyStats || []);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (loading) {
     return <DashboardSkeleton />;
@@ -53,7 +64,7 @@ function DashboardOverview() {
   if (error) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-600">Error: {error}</p>
+        <p className="text-red-600">Error: {error.message || 'Failed to load overview.'}</p>
       </div>
     );
   }
@@ -102,64 +113,91 @@ function DashboardOverview() {
       </div>
 
       {/* Analytics Section */}
-      {analytics && (
+      {analytics && showCost && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Call Statistics</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Cost Analysis</h2>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">Total Calls</span>
-                <span className="font-semibold">{analytics.totalCalls}</span>
+                <span className="text-gray-600">Total Cost</span>
+                <span className="font-semibold">{formatUSD(totalCostCents)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">Successful Calls</span>
-                <span className="font-semibold text-green-600">{analytics.successfulCalls}</span>
+                <span className="text-gray-600">Average Cost per Call</span>
+                <span className="font-semibold">{formatUSD(avgCostCents)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">Success Rate</span>
-                <span className="font-semibold">{analytics.successRate.toFixed(1)}%</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Average Duration</span>
-                <span className="font-semibold">{analytics.avgDurationSeconds}s</span>
+                <span className="text-gray-600">Total Duration</span>
+                <span className="font-semibold">
+                  {Math.floor((analytics.totalDurationSeconds || 0) / 3600)}h{' '}
+                  {Math.floor(((analytics.totalDurationSeconds || 0) % 3600) / 60)}m
+                </span>
               </div>
             </div>
           </div>
-
-          {showCost && (
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Cost Analysis</h2>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Total Cost</span>
-                  <span className="font-semibold">{formatUSD(totalCostCents)}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Average Cost per Call</span>
-                  <span className="font-semibold">{formatUSD(avgCostCents)}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Total Duration</span>
-                  <span className="font-semibold">
-                    {Math.floor((analytics.totalDurationSeconds || 0) / 3600)}h{' '}
-                    {Math.floor(((analytics.totalDurationSeconds || 0) % 3600) / 60)}m
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {callTrend.length ? (
+        {analytics && (
+          <ChartCard
+            title="Call Statistics"
+            subtitle="Totals and averages"
+            stat={`${analytics.totalCalls || 0} total`}
+            secondary={`${(analytics.successRate || 0).toFixed(1)}% success`}
+          >
+            <ResponsiveContainer width="100%" height={160}>
+              <BarChart
+                data={[
+                  { label: 'Total', value: analytics.totalCalls || 0 },
+                  { label: 'Successful', value: analytics.successfulCalls || 0 },
+                  { label: 'Failed', value: failedCalls || 0 },
+                  { label: 'Avg Duration (s)', value: analytics.avgDurationSeconds || 0 },
+                ]}
+                margin={{ top: 8, right: 12, left: -12, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={11} />
+                <YAxis tickLine={false} axisLine={false} fontSize={11} />
+                <Tooltip
+                  contentStyle={{ borderRadius: 10, borderColor: '#e5e7eb' }}
+                  labelStyle={{ fontWeight: 600 }}
+                />
+                <Bar dataKey="value" fill="#2563eb" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        )}
+        {chartData.length ? (
           <ChartCard
             title="Call Volume Trend"
             subtitle="Last 7 days"
             stat={`${totalCalls} total`}
-            secondary={`${Math.round(totalCalls / callTrend.length || 0)} avg/day`}
+            secondary={`${Math.round(totalCalls / Math.max(chartData.length, 1))} avg/day`}
           >
-            <SparklineChart values={callTrend} stroke="#2563eb" fill="rgba(37, 99, 235, 0.12)" />
+            <ResponsiveContainer width="100%" height={160}>
+              <AreaChart data={chartData} margin={{ top: 8, right: 12, left: -12, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="callsFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0.02} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="date" tickLine={false} axisLine={false} fontSize={11} />
+                <YAxis tickLine={false} axisLine={false} fontSize={11} />
+                <Tooltip
+                  contentStyle={{ borderRadius: 10, borderColor: '#e5e7eb' }}
+                  labelStyle={{ fontWeight: 600 }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="calls"
+                  stroke="#2563eb"
+                  fill="url(#callsFill)"
+                  strokeWidth={2.5}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
           </ChartCard>
         ) : (
           <ChartCard
@@ -169,17 +207,6 @@ function DashboardOverview() {
             secondary={`${successfulCalls} successful`}
           >
             <StackedBar segments={statusSegments} />
-          </ChartCard>
-        )}
-
-        {showCost && (
-          <ChartCard
-            title="Cost Trend"
-            subtitle="Last 7 days"
-            stat={`${formatUSD(totalCostCents)} total`}
-            secondary={`${formatUSD(Math.round(totalCostCents / costTrend.length || 0))} avg/day`}
-          >
-            <SparklineChart values={costTrend} stroke="#16a34a" fill="rgba(22, 163, 74, 0.12)" />
           </ChartCard>
         )}
 
@@ -205,6 +232,41 @@ function DashboardOverview() {
           </div>
         </ChartCard>
       </div>
+
+      {showCost && (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <ChartCard
+            title="Cost Trend"
+            subtitle="Last 7 days"
+            stat={`${formatUSD(totalCostCents)} total`}
+            secondary={`${formatUSD(Math.round(totalCostCents / Math.max(chartData.length, 1)))} avg/day`}
+          >
+            <ResponsiveContainer width="100%" height={160}>
+              <AreaChart data={chartData} margin={{ top: 8, right: 12, left: -12, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="costFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#16a34a" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#16a34a" stopOpacity={0.02} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="date" tickLine={false} axisLine={false} fontSize={11} />
+                <YAxis tickLine={false} axisLine={false} fontSize={11} />
+                <Tooltip
+                  contentStyle={{ borderRadius: 10, borderColor: '#e5e7eb' }}
+                  labelStyle={{ fontWeight: 600 }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="cost"
+                  stroke="#16a34a"
+                  fill="url(#costFill)"
+                  strokeWidth={2.5}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        </div>
+      )}
     </div>
   );
 }
@@ -247,31 +309,15 @@ function ChartCard({ title, subtitle, stat, secondary, children }) {
   );
 }
 
-function SparklineChart({ values, stroke, fill }) {
-  const width = 320;
-  const height = 120;
-  const padding = 12;
-  const points = getSparklinePoints(values, width, height, padding);
-  const linePoints = points.map((point) => `${point.x},${point.y}`).join(' ');
-  const areaPoints = `${linePoints} ${points[points.length - 1].x},${height - padding} ${
-    points[0].x
-  },${height - padding}`;
-
-  return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-28" role="img" aria-label="Trend chart">
-      <rect x="0" y="0" width={width} height={height} fill="transparent" />
-      <polygon points={areaPoints} fill={fill} />
-      <polyline
-        points={linePoints}
-        fill="none"
-        stroke={stroke}
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle cx={points[points.length - 1].x} cy={points[points.length - 1].y} r="4" fill={stroke} />
-    </svg>
-  );
+function formatChartDate(value) {
+  if (!value) {
+    return '';
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return String(value);
+  }
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
 function StackedBar({ segments }) {
@@ -322,19 +368,6 @@ function formatStatusLabel(status) {
     .toLowerCase()
     .replace(/_/g, ' ')
     .replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
-function getSparklinePoints(values, width, height, padding) {
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = max - min || 1;
-  const steps = values.length - 1 || 1;
-
-  return values.map((value, index) => {
-    const x = padding + (index / steps) * (width - padding * 2);
-    const y = height - padding - ((value - min) / range) * (height - padding * 2);
-    return { x, y };
-  });
 }
 
 function DashboardSkeleton() {

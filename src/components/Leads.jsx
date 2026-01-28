@@ -1,15 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { calcomAPI, integrationAPI, leadAPI } from "../services/api";
 import { DEFAULT_CAL_CONFIG, normalizeCalConfig } from "../utils/calConfig";
 
 function Leads() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [agentFilter, setAgentFilter] = useState("");
-  const [leads, setLeads] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
   const [deletingId, setDeletingId] = useState(null);
-  const [calConfig, setCalConfig] = useState(DEFAULT_CAL_CONFIG);
   const [appointmentLead, setAppointmentLead] = useState(null);
   const [appointmentForm, setAppointmentForm] = useState({
     eventTypeId: "",
@@ -20,84 +17,55 @@ function Leads() {
   });
   const [appointmentError, setAppointmentError] = useState("");
   const [appointmentSaving, setAppointmentSaving] = useState(false);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const fetchLeads = async () => {
-      setLoading(true);
-      setErrorMessage("");
-      try {
-        const params = {};
-        params.includeCount = false;
-        if (statusFilter !== "all") {
-          params.status = statusFilter;
-        }
-        const response = await leadAPI.list(params);
-        const data = response?.data?.leads || response?.data || [];
-        const normalized = data.map((lead) => ({
-          id: lead.id,
-          name: lead.name,
-          email: lead.email || "",
-          phone: lead.phone || "",
-          company: lead.company || "",
-          address: lead.address || "",
-          agentId: lead.agent_id || lead.agentId || "",
-          reason: lead.reason || "",
-          agentName: lead.agent_name || lead.agentName || "",
-          status: (lead.status || "").toLowerCase(),
-          createdAt: lead.created_at
-            ? new Date(lead.created_at).toLocaleString()
-            : lead.createdAt || "",
-          visitTime: lead.visit_time
-            ? new Date(lead.visit_time).toLocaleString()
-            : lead.visitTime || "",
-          visitTimeRaw: lead.visit_time || lead.visitTime || "",
-        }));
-
-        if (isMounted) {
-          setLeads(normalized);
-        }
-      } catch (error) {
-        if (isMounted) {
-          setErrorMessage(error.message || "Failed to load leads.");
-          setLeads([]);
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+  const {
+    data: leadsData,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["leads", statusFilter],
+    queryFn: async () => {
+      const params = { includeCount: false };
+      if (statusFilter !== "all") {
+        params.status = statusFilter;
       }
-    };
+      const response = await leadAPI.list(params);
+      const data = response?.data?.leads || response?.data || [];
+      return data.map((lead) => ({
+        id: lead.id,
+        name: lead.name,
+        email: lead.email || "",
+        phone: lead.phone || "",
+        company: lead.company || "",
+        address: lead.address || "",
+        agentId: lead.agent_id || lead.agentId || "",
+        reason: lead.reason || "",
+        agentName: lead.agent_name || lead.agentName || "",
+        status: (lead.status || "").toLowerCase(),
+        createdAt: lead.created_at
+          ? new Date(lead.created_at).toLocaleString()
+          : lead.createdAt || "",
+        visitTime: lead.visit_time
+          ? new Date(lead.visit_time).toLocaleString()
+          : lead.visitTime || "",
+        visitTimeRaw: lead.visit_time || lead.visitTime || "",
+      }));
+    },
+    keepPreviousData: true,
+  });
 
-    fetchLeads();
+  const { data: calIntegrationData } = useQuery({
+    queryKey: ["integrations", "calcom"],
+    queryFn: async () => {
+      const response = await integrationAPI.get("calcom");
+      return normalizeCalConfig(response?.data?.config);
+    },
+    staleTime: 60 * 1000,
+  });
 
-    return () => {
-      isMounted = false;
-    };
-  }, [statusFilter]);
-
-  useEffect(() => {
-    let isMounted = true;
-    const loadIntegration = async () => {
-      try {
-        const response = await integrationAPI.get("calcom");
-        if (!isMounted) {
-          return;
-        }
-        const integration = response?.data || null;
-        setCalConfig(normalizeCalConfig(integration?.config));
-      } catch {
-        if (isMounted) {
-          setCalConfig(DEFAULT_CAL_CONFIG);
-        }
-      }
-    };
-    loadIntegration();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const calConfig = calIntegrationData || DEFAULT_CAL_CONFIG;
+  const leads = leadsData || [];
 
   const filteredLeads = useMemo(() => {
     const normalizedAgentFilter = agentFilter.trim().toLowerCase();
@@ -120,12 +88,11 @@ function Leads() {
     }
 
     setDeletingId(leadId);
-    setErrorMessage("");
     try {
       await leadAPI.delete(leadId);
-      setLeads((prev) => prev.filter((lead) => lead.id !== leadId));
+      await queryClient.invalidateQueries({ queryKey: ["leads"] });
     } catch (error) {
-      setErrorMessage(error.message || "Failed to delete lead.");
+      // keep error message in modal if needed
     } finally {
       setDeletingId(null);
     }
@@ -246,11 +213,11 @@ function Leads() {
         </div>
       </div>
 
-      {loading ? (
+      {isLoading && leads.length === 0 ? (
         <LeadsSkeleton />
-      ) : errorMessage ? (
+      ) : error ? (
         <div className="bg-white rounded-lg shadow p-6 text-center text-red-600">
-          {errorMessage}
+          {error.message || "Failed to load leads."}
         </div>
       ) : filteredLeads.length === 0 ? (
         <div className="bg-white rounded-lg shadow p-6 text-center text-gray-500">
@@ -258,7 +225,8 @@ function Leads() {
         </div>
       ) : (
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="max-h-[520px] overflow-y-auto">
+          <div className="overflow-x-auto md:overflow-x-visible">
+            <div className="max-h-[520px] overflow-y-auto">
             <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -281,9 +249,6 @@ function Leads() {
                   Agent
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Agent ID
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -297,41 +262,38 @@ function Leads() {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredLeads.map((lead) => (
                 <tr key={lead.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-3 whitespace-nowrap md:whitespace-normal">
                     <div className="text-sm font-medium text-gray-900">
                       {lead.name}
                     </div>
                     <div className="text-xs text-gray-500">{lead.company}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                  <td className="px-4 py-3 whitespace-nowrap md:whitespace-normal text-sm text-gray-700">
                     <div>{lead.email}</div>
                     <div className="text-xs text-gray-500">{lead.phone}</div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-700 max-w-xs truncate">
+                  <td className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate md:whitespace-normal md:max-w-[220px] md:truncate-0">
                     {lead.address}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                  <td className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate md:whitespace-normal md:max-w-[200px] md:truncate-0">
                     {lead.reason}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                  <td className="px-4 py-3 whitespace-nowrap md:whitespace-normal text-sm text-gray-700">
                     {lead.visitTime}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                  <td className="px-4 py-3 whitespace-nowrap md:whitespace-normal text-sm text-gray-700">
                     {lead.agentName}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    {lead.agentId}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-3 whitespace-nowrap">
                     <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
                       {lead.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-4 py-3 whitespace-nowrap md:whitespace-normal text-sm text-gray-500">
                     {lead.createdAt}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                    <div className="flex items-center justify-end gap-3">
+                  <td className="px-4 py-3 whitespace-nowrap text-right text-sm">
+                    <div className="flex flex-wrap items-center justify-end gap-2">
                       <button
                         type="button"
                         onClick={() => openAppointmentModal(lead)}
@@ -353,6 +315,7 @@ function Leads() {
               ))}
             </tbody>
             </table>
+          </div>
           </div>
         </div>
       )}
