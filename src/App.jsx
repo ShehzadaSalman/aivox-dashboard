@@ -8,7 +8,6 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Login from "./components/Login";
 import Dashboard from "./components/Dashboard";
 import ErrorBoundary from "./components/ErrorBoundary";
-import NotFound from "./components/NotFound";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const queryClient = new QueryClient({
@@ -40,10 +39,14 @@ function AppRoutes() {
   return (
     <Routes>
       <Route
-        path="/login"
+        path="/"
         element={
           isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
         }
+      />
+      <Route
+        path="/login"
+        element={<Navigate to="/" replace />}
       />
       <Route
         path="/dashboard/*"
@@ -53,7 +56,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route path="*" element={<NotFound />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }
