@@ -9,6 +9,7 @@ import Appointments from "./Appointments";
 import UserManagement from "./UserManagement";
 import Profile from "./Profile";
 import Settings from "./Settings";
+import NotFound from "./NotFound";
 
 function Dashboard() {
   const location = useLocation();
@@ -220,7 +221,16 @@ function Dashboard() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/settings" element={<Settings />} />
             {isAdmin() && <Route path="/users" element={<UserManagement />} />}
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            <Route
+              path="*"
+              element={
+                <NotFound
+                  embedded
+                  ctaHref="/dashboard"
+                  ctaLabel="Back to dashboard home"
+                />
+              }
+            />
           </Routes>
         </main>
       </div>
