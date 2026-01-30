@@ -129,102 +129,104 @@ function Login() {
           <p className="text-gray-600">Sign in to manage your voice agents</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {isRegistering && (
+        {!verificationEmail && (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {isRegistering && (
+              <div>
+                <label
+                  htmlFor="name"
+                  className="block mb-2 text-sm font-medium text-gray-700"
+                >
+                  Name
+                </label>
+                <input
+                  id="name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full px-4 py-2 transition border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  placeholder="Enter your name"
+                  required
+                />
+              </div>
+            )}
+
             <div>
               <label
-                htmlFor="name"
+                htmlFor="email"
                 className="block mb-2 text-sm font-medium text-gray-700"
               >
-                Name
+                Email
               </label>
               <input
-                id="name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-2 transition border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                placeholder="Enter your name"
+                placeholder="Enter your email"
                 required
               />
             </div>
-          )}
 
-          <div>
-            <label
-              htmlFor="email"
-              className="block mb-2 text-sm font-medium text-gray-700"
-            >
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 transition border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-              placeholder="Enter your email"
-              required
-            />
-          </div>
+            {isRegistering && (
+              <div>
+                <label
+                  htmlFor="phone"
+                  className="block mb-2 text-sm font-medium text-gray-700"
+                >
+                  Phone
+                </label>
+                <input
+                  id="phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full px-4 py-2 transition border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  placeholder="Enter your phone number"
+                  required
+                />
+              </div>
+            )}
 
-          {isRegistering && (
             <div>
               <label
-                htmlFor="phone"
+                htmlFor="password"
                 className="block mb-2 text-sm font-medium text-gray-700"
               >
-                Phone
+                Password
               </label>
               <input
-                id="phone"
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-2 transition border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                placeholder="Enter your phone number"
+                placeholder="Enter your password"
                 required
               />
             </div>
-          )}
 
-          <div>
-            <label
-              htmlFor="password"
-              className="block mb-2 text-sm font-medium text-gray-700"
+            {error && (
+              <div className="p-3 text-sm text-center text-red-500 rounded-lg bg-red-50">
+                {error}
+              </div>
+            )}
+            {notice && (
+              <div className="p-3 text-sm text-center rounded-lg text-emerald-600 bg-emerald-50">
+                {notice}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full px-4 py-2 font-medium text-white transition duration-200 bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 transition border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-              placeholder="Enter your password"
-              required
-            />
-          </div>
-
-          {error && (
-            <div className="p-3 text-sm text-center text-red-500 rounded-lg bg-red-50">
-              {error}
-            </div>
-          )}
-          {notice && (
-            <div className="p-3 text-sm text-center rounded-lg text-emerald-600 bg-emerald-50">
-              {notice}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full px-4 py-2 font-medium text-white transition duration-200 bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? "Processing..." : isRegistering ? "Sign Up" : "Sign In"}
-          </button>
-        </form>
+              {loading ? "Processing..." : isRegistering ? "Sign Up" : "Sign In"}
+            </button>
+          </form>
+        )}
 
         {verificationEmail && (
           <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50/60 p-5">
@@ -270,20 +272,22 @@ function Login() {
           </div>
         )}
 
-        <div className="mt-6 text-sm text-center text-gray-600">
-          <button
-            type="button"
-            onClick={() => {
-              setIsRegistering(!isRegistering);
-              setError("");
-            }}
-            className="text-gray-900 underline hover:text-gray-700"
-          >
-            {isRegistering
-              ? "Already have an account? Sign in"
-              : "Don't have an account? Sign up"}
-          </button>
-        </div>
+        {!verificationEmail && (
+          <div className="mt-6 text-sm text-center text-gray-600">
+            <button
+              type="button"
+              onClick={() => {
+                setIsRegistering(!isRegistering);
+                setError("");
+              }}
+              className="text-gray-900 underline hover:text-gray-700"
+            >
+              {isRegistering
+                ? "Already have an account? Sign in"
+                : "Don't have an account? Sign up"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
