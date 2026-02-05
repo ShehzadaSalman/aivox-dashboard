@@ -128,7 +128,132 @@ function UserManagement() {
         </div>
       ) : (
         <>
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+          {/* Mobile Cards */}
+          <div className="md:hidden -mx-4 overflow-x-auto px-4">
+            <div className="flex gap-4">
+              {users.map((user) => (
+                <div
+                  key={user.id}
+                  className="w-[85vw] max-w-sm flex-shrink-0 rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
+                >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-gray-900">
+                      {user.email}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {user.name || "N/A"}
+                    </p>
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-1 text-xs font-semibold ${
+                      user.status === "APPROVED"
+                        ? "bg-emerald-100 text-emerald-800"
+                        : user.status === "REJECTED"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-yellow-100 text-yellow-800"
+                    }`}
+                  >
+                    {user.status}
+                  </span>
+                </div>
+
+                <div className="mt-3 grid gap-2 text-sm text-gray-600">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs uppercase tracking-wide text-gray-400">
+                      Phone
+                    </span>
+                    <span>{user.phone || "N/A"}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs uppercase tracking-wide text-gray-400">
+                      Phone Status
+                    </span>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                        user.phone
+                          ? user.phone_verified_at
+                            ? "bg-emerald-100 text-emerald-800"
+                            : "bg-yellow-100 text-yellow-800"
+                          : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {user.phone
+                        ? user.phone_verified_at
+                          ? "Verified"
+                          : "Unverified"
+                        : "No phone"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs uppercase tracking-wide text-gray-400">
+                      Role
+                    </span>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                        user.role === "SUPERADMIN"
+                          ? "bg-amber-100 text-amber-800"
+                          : user.role === "ADMIN"
+                            ? "bg-purple-100 text-purple-800"
+                            : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {user.role}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs uppercase tracking-wide text-gray-400">
+                      Created
+                    </span>
+                    <span>{new Date(user.created_at).toLocaleDateString()}</span>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-3 text-sm font-medium">
+                  {isSuperAdmin() && user.status === "PENDING" && (
+                    <button
+                      onClick={async () => {
+                        try {
+                          await userAPI.approve(user.id);
+                          await fetchUsers();
+                        } catch (err) {
+                          alert(`Failed to approve user: ${err.message}`);
+                        }
+                      }}
+                      className="text-gray-900 hover:text-gray-700"
+                    >
+                      Approve
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleEdit(user)}
+                    disabled={user.role === "SUPERADMIN" && !isSuperAdmin()}
+                    className="text-gray-900 hover:text-gray-700 disabled:opacity-50"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleAssignAgents(user)}
+                    disabled={user.role === "SUPERADMIN" && !isSuperAdmin()}
+                    className="text-gray-900 hover:text-gray-700 disabled:opacity-50"
+                  >
+                    Assign Agents
+                  </button>
+                  <button
+                    onClick={() => handleDelete(user.id)}
+                    disabled={user.role === "SUPERADMIN"}
+                    className="text-rose-600 hover:text-rose-700 disabled:opacity-50"
+                  >
+                    Remove
+                  </button>
+                </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Desktop Table */}
+          <div className="hidden bg-white rounded-lg shadow overflow-hidden md:block">
             <div className="overflow-x-auto">
               <table className="min-w-[900px] w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
