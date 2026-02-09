@@ -38,7 +38,8 @@ const applyDefaultCountryCode = (phone, defaultCountryCode) => {
     return trimmed;
   }
   const normalizedCode = normalizeCountryCode(defaultCountryCode);
-  return `${normalizedCode} ${trimmed}`.trim();
+  const normalizedPhone = trimmed.replace(/^0+/, "");
+  return `${normalizedCode}${normalizedPhone}`.trim();
 };
 
 function Leads() {

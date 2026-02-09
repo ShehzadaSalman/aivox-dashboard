@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { agentAPI, userAPI } from '../services/api';
+import { agentAPI, planAPI, userAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
 function UserManagement() {
@@ -13,6 +13,8 @@ function UserManagement() {
   const [editingUser, setEditingUser] = useState(null);
   const [showAssignments, setShowAssignments] = useState(false);
   const [assignmentUser, setAssignmentUser] = useState(null);
+  const [showPlanModal, setShowPlanModal] = useState(false);
+  const [planUser, setPlanUser] = useState(null);
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
@@ -75,6 +77,11 @@ function UserManagement() {
   const handleAssignAgents = (user) => {
     setAssignmentUser(user);
     setShowAssignments(true);
+  };
+
+  const handleAssignPlan = (user) => {
+    setPlanUser(user);
+    setShowPlanModal(true);
   };
 
   if (!isAdmin()) {
@@ -281,6 +288,14 @@ function UserManagement() {
                   >
                     Assign Agents
                   </button>
+                  {isSuperAdmin() && user.role === "USER" && (
+                    <button
+                      onClick={() => handleAssignPlan(user)}
+                      className="text-gray-900 hover:text-gray-700"
+                    >
+                      Assign Plan
+                    </button>
+                  )}
                   <button
                     onClick={() => handleDelete(user.id)}
                     disabled={user.role === "SUPERADMIN"}
@@ -405,6 +420,14 @@ function UserManagement() {
                       >
                         Assign Agents
                       </button>
+                      {isSuperAdmin() && user.role === 'USER' && (
+                        <button
+                          onClick={() => handleAssignPlan(user)}
+                          className="text-gray-900 hover:text-gray-700 mr-4"
+                        >
+                          Assign Plan
+                        </button>
+                      )}
                       <button
                         onClick={() => handleDelete(user.id)}
                         disabled={user.role === 'SUPERADMIN'}
@@ -474,6 +497,23 @@ function UserManagement() {
             setShowAssignments(false);
             setAssignmentUser(null);
           }}
+        />
+      )}
+
+      {showPlanModal && (
+        <PlanAssignmentModal
+          user={planUser}
+          onClose={() => {
+            setShowPlanModal(false);
+            setPlanUser(null);
+          }}
+          onAssigned={async () => {
+            await fetchUsers();
+            setShowPlanModal(false);
+            setPlanUser(null);
+            showToast('Plan assigned successfully.', 'success');
+          }}
+          onError={(message) => showToast(message)}
         />
       )}
     </div>
@@ -754,6 +794,138 @@ function AgentAssignmentModal({ user, onClose }) {
             Showing the first 100 agents. Refine search if you don't see the one you need.
           </p>
         )}
+      </div>
+    </div>
+  );
+}
+
+function PlanAssignmentModal({ user, onClose, onAssigned, onError }) {
+  const [plans, setPlans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [planCode, setPlanCode] = useState('');
+  const [periodDays, setPeriodDays] = useState(30);
+
+  useEffect(() => {
+    if (!user?.id) {
+      return;
+    }
+    const fetchPlans = async () => {
+      try {
+        setLoading(true);
+        setError('');
+        const response = await planAPI.list();
+        const list = response?.data || [];
+        setPlans(list);
+        const firstActive = list.find((plan) => plan.is_active) || list[0];
+        setPlanCode(firstActive?.code || '');
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPlans();
+  }, [user?.id]);
+
+  const handleAssign = async () => {
+    if (!planCode) {
+      setError('Select a plan.');
+      return;
+    }
+    try {
+      setSaving(true);
+      setError('');
+      await userAPI.assignPlan(user.id, {
+        planCode,
+        periodDays: Number(periodDays) || 30,
+      });
+      onAssigned();
+    } catch (err) {
+      setError(err.message);
+      onError?.(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold">Assign Plan</h2>
+            <p className="text-sm text-gray-600 mt-1">{user?.email}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            Close
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="mt-4 text-sm text-gray-600">Loading plans...</div>
+        ) : (
+          <div className="mt-4 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Plan
+              </label>
+              <select
+                value={planCode}
+                onChange={(e) => setPlanCode(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              >
+                {plans.map((plan) => (
+                  <option key={plan.id} value={plan.code}>
+                    {plan.name} ({plan.code})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Period (days)
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="365"
+                value={periodDays}
+                onChange={(e) => setPeriodDays(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="mt-4 text-red-600 text-sm bg-red-50 p-3 rounded-lg">
+            {error}
+          </div>
+        )}
+
+        <div className="mt-6 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleAssign}
+            disabled={loading || saving}
+            className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50"
+          >
+            {saving ? 'Assigning...' : 'Assign Plan'}
+          </button>
+        </div>
       </div>
     </div>
   );

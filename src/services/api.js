@@ -264,6 +264,13 @@ export const userAPI = {
     });
   },
 
+  assignPlan: async (userId, payload) => {
+    return apiRequest(`/api/dashboard/users/${userId}/plan`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
   listAgents: async (userId) => {
     return apiRequest(`/api/dashboard/users/${userId}/agents`);
   },
@@ -280,6 +287,12 @@ export const userAPI = {
       method: "DELETE",
       body: JSON.stringify({ userId, agentId }),
     });
+  },
+};
+
+export const planAPI = {
+  list: async () => {
+    return apiRequest("/api/dashboard/plans");
   },
 };
 
@@ -319,6 +332,7 @@ export default {
   analytics: analyticsAPI,
   integration: integrationAPI,
   calcom: calcomAPI,
+  plan: planAPI,
   user: userAPI,
   utility: utilityAPI,
   search: searchAPI,
