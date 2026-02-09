@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { calcomAPI, integrationAPI, leadAPI } from "../services/api";
 import { DEFAULT_CAL_CONFIG, normalizeCalConfig } from "../utils/calConfig";
@@ -55,6 +55,7 @@ function Leads() {
   });
   const [appointmentError, setAppointmentError] = useState("");
   const [appointmentSaving, setAppointmentSaving] = useState(false);
+  const [toast, setToast] = useState(null);
   const queryClient = useQueryClient();
 
   const {
@@ -81,12 +82,8 @@ function Leads() {
         reason: lead.reason || "",
         agentName: lead.agent_name || lead.agentName || "",
         status: (lead.status || "").toLowerCase(),
-        createdAt: lead.created_at
-          ? new Date(lead.created_at).toLocaleString()
-          : lead.createdAt || "",
-        visitTime: lead.visit_time
-          ? new Date(lead.visit_time).toLocaleString()
-          : lead.visitTime || "",
+        createdAt: formatReadableDateTime(lead.created_at || lead.createdAt),
+        visitTime: formatReadableDateTime(lead.visit_time || lead.visitTime),
         visitTimeRaw: lead.visit_time || lead.visitTime || "",
       }));
     },
@@ -229,6 +226,7 @@ function Leads() {
       };
       await calcomAPI.reserveSlot(payload);
       setAppointmentLead(null);
+      setToast({ message: "Appointment created successfully.", variant: "success" });
     } catch (error) {
       setAppointmentError(error.message || "Failed to create appointment.");
     } finally {
@@ -236,8 +234,38 @@ function Leads() {
     }
   };
 
+  useEffect(() => {
+    if (!toast) {
+      return undefined;
+    }
+    const timeout = setTimeout(() => {
+      setToast(null);
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }, [toast]);
+
   return (
     <div className="space-y-6">
+      {toast && (
+        <div className="fixed top-4 right-4 z-50">
+          <div
+            className={`flex items-start gap-3 rounded-lg px-4 py-3 shadow-lg ${
+              toast.variant === "success"
+                ? "bg-emerald-600 text-white"
+                : "bg-rose-600 text-white"
+            }`}
+          >
+            <div className="text-sm font-medium">{toast.message}</div>
+            <button
+              type="button"
+              onClick={() => setToast(null)}
+              className="ml-2 text-white/80 hover:text-white"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Leads</h1>
@@ -574,3 +602,18 @@ function formatReadableStart(value) {
 }
 
 export default Leads;
+
+function formatReadableDateTime(value) {
+  if (!value) {
+    return "";
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return String(value);
+  }
+  return date.toLocaleString(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+    hour12: true,
+  });
+}

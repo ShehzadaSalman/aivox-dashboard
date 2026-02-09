@@ -1,9 +1,10 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { authAPI } from '../services/api';
+import { authAPI, integrationAPI } from '../services/api';
 
 const AuthContext = createContext(null);
 const AUTH_TOKEN_KEY = 'authToken';
 const AUTH_USER_KEY = 'authUser';
+const SMS_COUNTRY_CODE_KEY = 'smsDefaultCountryCode';
 
 const getStoredUser = () => {
   if (typeof window === 'undefined') {
@@ -52,14 +53,32 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  const fetchSmsCountryCode = useCallback(async () => {
+    try {
+      const response = await integrationAPI.get('sms');
+      const code =
+        response?.data?.config?.defaultCountryCode || '';
+      if (typeof window !== 'undefined') {
+        if (code) {
+          localStorage.setItem(SMS_COUNTRY_CODE_KEY, code);
+        } else {
+          localStorage.removeItem(SMS_COUNTRY_CODE_KEY);
+        }
+      }
+    } catch (error) {
+      // keep stale cached value if request fails
+    }
+  }, []);
+
   useEffect(() => {
     // Check if user is already logged in
     if (token) {
       fetchUser();
+      fetchSmsCountryCode();
     } else {
       setLoading(false);
     }
-  }, [token, fetchUser]);
+  }, [token, fetchUser, fetchSmsCountryCode]);
 
   const login = async (email, password) => {
     try {
@@ -70,6 +89,7 @@ export const AuthProvider = ({ children }) => {
         }
         setToken(response.token);
         await fetchUser();
+        await fetchSmsCountryCode();
         return { success: true };
       }
       return { success: false, error: 'Login failed' };
@@ -88,6 +108,7 @@ export const AuthProvider = ({ children }) => {
           }
           setToken(response.token);
           await fetchUser();
+          await fetchSmsCountryCode();
           return { success: true };
         }
         return {
@@ -124,6 +145,7 @@ export const AuthProvider = ({ children }) => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem(AUTH_TOKEN_KEY);
       localStorage.removeItem(AUTH_USER_KEY);
+      localStorage.removeItem(SMS_COUNTRY_CODE_KEY);
     }
     setToken(null);
     setUser(null);

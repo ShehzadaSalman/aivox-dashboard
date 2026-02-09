@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { calcomAPI } from "../services/api";
 
@@ -12,6 +12,7 @@ function Appointments() {
   });
   const [deletingId, setDeletingId] = useState(null);
   const [deleteError, setDeleteError] = useState("");
+  const [toast, setToast] = useState(null);
 
   const {
     data: bookingsData,
@@ -27,9 +28,9 @@ function Appointments() {
     ],
     queryFn: async () => {
       const params = { take: 100 };
+      const nowIso = new Date().toISOString();
+      params.afterStart = nowIso;
       if (filters.eventTypeId.trim()) params.eventTypeId = filters.eventTypeId.trim();
-      if (filters.afterStart) params.afterStart = toIsoFromLocal(filters.afterStart);
-      if (filters.beforeStart) params.beforeStart = toIsoFromLocal(filters.beforeStart);
       if (filters.sortStart) params.sortStart = filters.sortStart;
       const response = await calcomAPI.listBookings(params);
       const data = response || {};
@@ -39,7 +40,7 @@ function Appointments() {
         ? data
         : data?.bookings || data?.data?.data || data?.data?.bookings || [];
       return list.filter(
-        (booking) => (booking.status || "").toLowerCase() !== "cancelled"
+        (booking) => (booking.status || "").toLowerCase() === "accepted"
       );
     },
     keepPreviousData: true,
@@ -47,6 +48,20 @@ function Appointments() {
 
   const handleFilterChange = (field, value) => {
     setFilters((prev) => ({ ...prev, [field]: value }));
+  };
+
+  useEffect(() => {
+    if (!toast) {
+      return undefined;
+    }
+    const timeout = setTimeout(() => {
+      setToast(null);
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }, [toast]);
+
+  const showToast = (message, variant = "success") => {
+    setToast({ message, variant });
   };
 
   const handleDelete = async (booking) => {
@@ -75,11 +90,31 @@ function Appointments() {
 
   return (
     <div className="space-y-6">
+      {toast && (
+        <div className="fixed top-4 right-4 z-50">
+          <div
+            className={`flex items-start gap-3 rounded-lg px-4 py-3 shadow-lg ${
+              toast.variant === "success"
+                ? "bg-emerald-600 text-white"
+                : "bg-rose-600 text-white"
+            }`}
+          >
+            <div className="text-sm font-medium">{toast.message}</div>
+            <button
+              type="button"
+              onClick={() => setToast(null)}
+              className="ml-2 text-white/80 hover:text-white"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Appointments</h1>
           <p className="text-gray-600 mt-1">
-            Book and manage appointments directly from Cal.com
+            Book and manage appointments directly from Cal.com. Showing accepted appointments only.
           </p>
         </div>
       </div>
@@ -110,6 +145,7 @@ function Appointments() {
               onChange={(event) =>
                 handleFilterChange("afterStart", event.target.value)
               }
+              disabled
               className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
             />
           </div>
@@ -123,6 +159,7 @@ function Appointments() {
               onChange={(event) =>
                 handleFilterChange("beforeStart", event.target.value)
               }
+              disabled
               className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
             />
           </div>
@@ -172,13 +209,16 @@ function Appointments() {
                     Attendee
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Start
+                    Time
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Status
+                    Title / Description
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Event Type
+                    Duration
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Location
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
                     Actions
@@ -188,7 +228,7 @@ function Appointments() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {bookingsData.map((booking) => (
                   <tr key={booking.id || booking.uid || booking.bookingId}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <td className="px-6 py-4 text-sm text-gray-700 max-w-[180px] truncate">
                       <div className="text-sm font-medium text-gray-900">
                         {booking.attendees?.[0]?.name || "--"}
                       </div>
@@ -197,17 +237,56 @@ function Appointments() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      {booking.start
-                        ? new Date(booking.start).toLocaleString()
-                        : "--"}
+                      {formatReadableDateTime(booking.start)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
-                        {booking.status || "unknown"}
-                      </span>
+                    <td className="px-6 py-4 text-sm text-gray-700 max-w-xs truncate md:whitespace-normal md:max-w-[220px] md:truncate-0">
+                      <div className="text-sm font-medium text-gray-900">
+                        {booking.title || "--"}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {booking.description || ""}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      {booking.eventTypeId || booking.eventType?.id || "--"}
+                      {typeof booking.duration === "number"
+                        ? `${booking.duration} min`
+                        : booking.duration || "--"}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-700 max-w-[160px] truncate">
+                      {booking.location ? (
+                        <button
+                          type="button"
+                          title="Click to copy"
+                          onClick={() => {
+                            if (
+                              typeof navigator !== "undefined" &&
+                              navigator.clipboard
+                            ) {
+                              navigator.clipboard
+                                .writeText(booking.location)
+                                .then(() =>
+                                  showToast("Location link copied.")
+                                )
+                                .catch(() =>
+                                  showToast(
+                                    "Failed to copy location link.",
+                                    "error"
+                                  )
+                                );
+                              return;
+                            }
+                            showToast(
+                              "Clipboard unavailable in this browser.",
+                              "error"
+                            );
+                          }}
+                          className="text-left text-gray-700 hover:text-gray-900 cursor-pointer"
+                        >
+                          {booking.location}
+                        </button>
+                      ) : (
+                        "--"
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                       {(() => {
@@ -262,4 +341,19 @@ function toLocalInputValue(value) {
   const tzOffset = date.getTimezoneOffset() * 60000;
   const local = new Date(date.getTime() - tzOffset);
   return local.toISOString().slice(0, 16);
+}
+
+function formatReadableDateTime(value) {
+  if (!value) {
+    return "--";
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return String(value);
+  }
+  return date.toLocaleString(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+    hour12: true,
+  });
 }
