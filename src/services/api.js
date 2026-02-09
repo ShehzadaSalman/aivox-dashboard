@@ -213,6 +213,11 @@ export const calcomAPI = {
     const suffix = queryString ? `?${queryString}` : "";
     return apiRequest(`/api/bookings${suffix}`);
   },
+  cancelBooking: async (reservationId) => {
+    return apiRequest(`/api/bookings/${reservationId}`, {
+      method: "DELETE",
+    });
+  },
 };
 
 // Integration APIs

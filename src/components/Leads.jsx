@@ -3,6 +3,44 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { calcomAPI, integrationAPI, leadAPI } from "../services/api";
 import { DEFAULT_CAL_CONFIG, normalizeCalConfig } from "../utils/calConfig";
 
+const DEFAULT_SMS_CONFIG = {
+  defaultCountryCode: "+1",
+};
+
+const normalizeCountryCode = (value) => {
+  const trimmed = String(value || "").trim();
+  if (!trimmed) {
+    return DEFAULT_SMS_CONFIG.defaultCountryCode;
+  }
+  if (trimmed.startsWith("+")) {
+    return trimmed;
+  }
+  if (/^\d+$/.test(trimmed)) {
+    return `+${trimmed}`;
+  }
+  return trimmed;
+};
+
+const hasCountryCode = (phone) => {
+  const trimmed = String(phone || "").trim();
+  if (!trimmed) {
+    return false;
+  }
+  return trimmed.startsWith("+") || trimmed.startsWith("00");
+};
+
+const applyDefaultCountryCode = (phone, defaultCountryCode) => {
+  const trimmed = String(phone || "").trim();
+  if (!trimmed) {
+    return "";
+  }
+  if (hasCountryCode(trimmed)) {
+    return trimmed;
+  }
+  const normalizedCode = normalizeCountryCode(defaultCountryCode);
+  return `${normalizedCode} ${trimmed}`.trim();
+};
+
 function Leads() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [agentFilter, setAgentFilter] = useState("");
@@ -64,8 +102,25 @@ function Leads() {
     staleTime: 60 * 1000,
   });
 
+  const { data: smsIntegrationData } = useQuery({
+    queryKey: ["integrations", "sms"],
+    queryFn: async () => {
+      const response = await integrationAPI.get("sms");
+      return response?.data?.config || {};
+    },
+    staleTime: 60 * 1000,
+  });
+
   const calConfig = calIntegrationData || DEFAULT_CAL_CONFIG;
+  const defaultCountryCode = normalizeCountryCode(
+    smsIntegrationData?.defaultCountryCode ||
+      DEFAULT_SMS_CONFIG.defaultCountryCode
+  );
   const leads = leadsData || [];
+
+  const formatLeadPhone = useMemo(() => {
+    return (phone) => applyDefaultCountryCode(phone, defaultCountryCode);
+  }, [defaultCountryCode]);
 
   const filteredLeads = useMemo(() => {
     const normalizedAgentFilter = agentFilter.trim().toLowerCase();
@@ -270,7 +325,9 @@ function Leads() {
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap md:whitespace-normal text-sm text-gray-700">
                     <div>{lead.email}</div>
-                    <div className="text-xs text-gray-500">{lead.phone}</div>
+                    <div className="text-xs text-gray-500">
+                      {formatLeadPhone(lead.phone)}
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate md:whitespace-normal md:max-w-[220px] md:truncate-0">
                     {lead.address}
@@ -305,7 +362,7 @@ function Leads() {
                         type="button"
                         onClick={() => handleDelete(lead.id)}
                         disabled={deletingId === lead.id}
-                        className="text-gray-900 hover:text-gray-700 disabled:opacity-50"
+                        className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
                       >
                         {deletingId === lead.id ? "Deleting..." : "Delete"}
                       </button>

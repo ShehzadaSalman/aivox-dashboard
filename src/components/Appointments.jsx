@@ -1,14 +1,17 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { calcomAPI } from "../services/api";
 
 function Appointments() {
+  const queryClient = useQueryClient();
   const [filters, setFilters] = useState({
     eventTypeId: "",
-    afterStart: "",
+    afterStart: toLocalInputValue(new Date().toISOString()),
     beforeStart: "",
     sortStart: "",
   });
+  const [deletingId, setDeletingId] = useState(null);
+  const [deleteError, setDeleteError] = useState("");
 
   const {
     data: bookingsData,
@@ -35,13 +38,39 @@ function Appointments() {
         : Array.isArray(data)
         ? data
         : data?.bookings || data?.data?.data || data?.data?.bookings || [];
-      return list;
+      return list.filter(
+        (booking) => (booking.status || "").toLowerCase() !== "cancelled"
+      );
     },
     keepPreviousData: true,
   });
 
   const handleFilterChange = (field, value) => {
     setFilters((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleDelete = async (booking) => {
+    const reservationId = booking.uid;
+    if (!reservationId) {
+      setDeleteError("Missing booking uid from Cal.com.");
+      return;
+    }
+    const confirmDelete = window.confirm(
+      "Are you sure you want to remove this appointment?"
+    );
+    if (!confirmDelete) {
+      return;
+    }
+    setDeletingId(reservationId);
+    setDeleteError("");
+    try {
+      await calcomAPI.cancelBooking(reservationId);
+      await queryClient.invalidateQueries({ queryKey: ["bookings"] });
+    } catch (error) {
+      setDeleteError(error.message || "Failed to remove appointment.");
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   return (
@@ -130,6 +159,11 @@ function Appointments() {
         </div>
       ) : (
         <div className="bg-white rounded-lg shadow overflow-hidden">
+          {deleteError && (
+            <div className="border-b border-red-100 bg-red-50 px-6 py-3 text-sm text-red-600">
+              {deleteError}
+            </div>
+          )}
           <div className="max-h-[520px] overflow-y-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -145,6 +179,9 @@ function Appointments() {
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Event Type
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                    Actions
                   </th>
                 </tr>
               </thead>
@@ -172,6 +209,24 @@ function Appointments() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                       {booking.eventTypeId || booking.eventType?.id || "--"}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                      {(() => {
+                        const reservationId = booking.uid;
+                        const isDisabled = !reservationId || deletingId === reservationId;
+                        return (
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(booking)}
+                        disabled={isDisabled}
+                        className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
+                      >
+                        {deletingId === reservationId
+                          ? "Removing..."
+                          : "Remove"}
+                      </button>
+                        );
+                      })()}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -194,4 +249,17 @@ function toIsoFromLocal(value) {
     return "";
   }
   return date.toISOString();
+}
+
+function toLocalInputValue(value) {
+  if (!value) {
+    return "";
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+  const tzOffset = date.getTimezoneOffset() * 60000;
+  const local = new Date(date.getTime() - tzOffset);
+  return local.toISOString().slice(0, 16);
 }

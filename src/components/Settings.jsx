@@ -1,6 +1,44 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  CountrySelectorDropdown,
+  FlagImage,
+  defaultCountries,
+  parseCountry,
+} from "react-international-phone";
+import "react-international-phone/style.css";
 import { integrationAPI, utilityAPI } from "../services/api";
 import { DEFAULT_CAL_CONFIG, normalizeCalConfig } from "../utils/calConfig";
+
+const DEFAULT_SMS_CONFIG = {
+  defaultCountryCode: "+1",
+};
+
+const normalizeDialCode = (value) => String(value || "").replace(/[^\d]/g, "");
+
+const findCountryByDialCode = (dialCode) => {
+  const normalized = normalizeDialCode(dialCode);
+  if (!normalized) {
+    return null;
+  }
+  for (const country of defaultCountries) {
+    const parsed = parseCountry(country);
+    if (parsed.dialCode === normalized) {
+      return parsed;
+    }
+  }
+  return null;
+};
+
+const findCountryByIso2 = (iso2) => {
+  if (!iso2) return null;
+  for (const country of defaultCountries) {
+    const parsed = parseCountry(country);
+    if (parsed.iso2 === iso2) {
+      return parsed;
+    }
+  }
+  return null;
+};
 
 function Settings() {
   const [planUsage, setPlanUsage] = useState(null);
@@ -9,6 +47,11 @@ function Settings() {
   const [calConfig, setCalConfig] = useState(DEFAULT_CAL_CONFIG);
   const [calSaving, setCalSaving] = useState(false);
   const [calError, setCalError] = useState("");
+  const [smsConfig, setSmsConfig] = useState(DEFAULT_SMS_CONFIG);
+  const [smsSaving, setSmsSaving] = useState(false);
+  const [smsError, setSmsError] = useState("");
+  const [smsCountryIso2, setSmsCountryIso2] = useState("us");
+  const [smsCountryOpen, setSmsCountryOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -60,6 +103,39 @@ function Settings() {
     };
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+    const loadSmsIntegration = async () => {
+      setSmsError("");
+      try {
+        const response = await integrationAPI.get("sms");
+        if (!isMounted) {
+          return;
+        }
+        const integration = response?.data || null;
+        const nextConfig = {
+          ...DEFAULT_SMS_CONFIG,
+          ...(integration?.config || {}),
+        };
+        setSmsConfig(nextConfig);
+        const matchedCountry =
+          findCountryByDialCode(nextConfig.defaultCountryCode) ||
+          findCountryByIso2("us");
+        setSmsCountryIso2(matchedCountry?.iso2 || "us");
+      } catch (error) {
+        if (isMounted) {
+          setSmsError(error.message || "Failed to load SMS settings.");
+          setSmsConfig(DEFAULT_SMS_CONFIG);
+          setSmsCountryIso2("us");
+        }
+      }
+    };
+    loadSmsIntegration();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const handleToggleAutoCreate = async () => {
     const nextValue = !calConfig.autoCreateAppointments;
     setCalConfig((prev) => ({ ...prev, autoCreateAppointments: nextValue }));
@@ -80,14 +156,47 @@ function Settings() {
     }
   };
 
+  const handleSmsSave = async () => {
+    const nextCode = smsConfig.defaultCountryCode.trim();
+    if (!/^\+\d{1,4}$/.test(nextCode)) {
+      setSmsError("Enter a valid country code like +1 or +44.");
+      return;
+    }
+    setSmsSaving(true);
+    setSmsError("");
+    try {
+      await integrationAPI.update("sms", {
+        config: { defaultCountryCode: nextCode },
+      });
+    } catch (error) {
+      setSmsError(error.message || "Failed to update SMS settings.");
+    } finally {
+      setSmsSaving(false);
+    }
+  };
+
+  const selectedSmsCountry = useMemo(
+    () => findCountryByIso2(smsCountryIso2),
+    [smsCountryIso2]
+  );
+
+  const handleSelectSmsCountry = (country) => {
+    setSmsCountryIso2(country.iso2);
+    setSmsConfig((prev) => ({
+      ...prev,
+      defaultCountryCode: `+${country.dialCode}`,
+    }));
+    setSmsCountryOpen(false);
+  };
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Settings</h1>
+        <h1 className="mb-2 text-3xl font-bold text-gray-900">Settings</h1>
         <p className="text-gray-600">Control your preferences and notifications.</p>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="p-6 bg-white rounded-lg shadow">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Plan & Usage</h2>
@@ -115,9 +224,9 @@ function Settings() {
                 {formatMinutes(planUsage.usage?.used_minutes)} min
               </span>
             </div>
-            <div className="h-2 rounded-full bg-gray-200">
+                <div className="h-2 bg-gray-200 rounded-full">
               <div
-                className="h-2 rounded-full bg-emerald-500 transition-all"
+                    className="h-2 transition-all rounded-full bg-emerald-500"
                 style={{ width: `${planUsage.usage?.usage_percent || 0}%` }}
               />
             </div>
@@ -139,8 +248,8 @@ function Settings() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg shadow p-6 space-y-4">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="p-6 space-y-4 bg-white rounded-lg shadow">
           <h2 className="text-lg font-semibold text-gray-900">Notifications</h2>
           <div className="flex items-center justify-between">
             <div>
@@ -162,17 +271,17 @@ function Settings() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6 space-y-4">
+        <div className="p-6 space-y-4 bg-white rounded-lg shadow">
           <h2 className="text-lg font-semibold text-gray-900">Billing</h2>
           <p className="text-sm text-gray-600">
             Update your plan or payment method from your billing portal.
           </p>
-          <button className="px-4 py-2 rounded-lg bg-gray-900 text-white text-sm">
+          <button className="px-4 py-2 text-sm text-white bg-gray-900 rounded-lg">
             Open billing portal
           </button>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6 space-y-4">
+        <div className="p-6 space-y-4 bg-white rounded-lg shadow">
           <h2 className="text-lg font-semibold text-gray-900">Appointments</h2>
           <div className="flex items-center justify-between gap-4">
             <div>
@@ -199,6 +308,55 @@ function Settings() {
             </button>
           </div>
           {calError && <p className="text-xs text-red-600">{calError}</p>}
+        </div>
+
+        <div className="p-6 space-y-4 bg-white rounded-lg shadow">
+          <div>
+            <label className="block mb-2 text-sm font-medium text-gray-700">
+              Default country code
+            </label>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setSmsCountryOpen((prev) => !prev)}
+                aria-haspopup="listbox"
+                aria-expanded={smsCountryOpen}
+                className="flex items-center w-full gap-3 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              >
+                <FlagImage iso2={smsCountryIso2} size="20px" />
+                <span className="text-sm text-gray-700">
+                  {selectedSmsCountry?.name || "Select country"}
+                </span>
+                <span className="ml-auto text-sm font-medium text-gray-900">
+                  {selectedSmsCountry?.dialCode
+                    ? `+${selectedSmsCountry.dialCode}`
+                    : smsConfig.defaultCountryCode}
+                </span>
+                <span className="text-gray-400">▾</span>
+              </button>
+              <CountrySelectorDropdown
+                show={smsCountryOpen}
+                selectedCountry={smsCountryIso2}
+                onSelect={handleSelectSmsCountry}
+                onClose={() => setSmsCountryOpen(false)}
+                className="absolute z-50 w-full mt-2"
+              />
+            </div>
+            <p className="mt-2 text-xs text-gray-500">
+              Used when a phone number doesn't include a country code.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleSmsSave}
+              disabled={smsSaving}
+              className="px-4 py-2 text-sm text-white bg-gray-900 rounded-lg disabled:opacity-60"
+            >
+              {smsSaving ? "Saving..." : "Save Country Code"}
+            </button>
+            {smsError && <p className="text-xs text-red-600">{smsError}</p>}
+          </div>
         </div>
       </div>
     </div>

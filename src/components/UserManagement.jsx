@@ -13,12 +13,27 @@ function UserManagement() {
   const [editingUser, setEditingUser] = useState(null);
   const [showAssignments, setShowAssignments] = useState(false);
   const [assignmentUser, setAssignmentUser] = useState(null);
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     if (isAdmin()) {
       fetchUsers();
     }
   }, [filters, pagination.offset, isAdmin]);
+
+  useEffect(() => {
+    if (!toast) {
+      return undefined;
+    }
+    const timeout = setTimeout(() => {
+      setToast(null);
+    }, 4000);
+    return () => clearTimeout(timeout);
+  }, [toast]);
+
+  const showToast = (message, variant = 'error') => {
+    setToast({ message, variant });
+  };
 
   const fetchUsers = async () => {
     try {
@@ -72,6 +87,26 @@ function UserManagement() {
 
   return (
     <div className="space-y-6">
+      {toast && (
+        <div className="fixed top-4 right-4 z-50">
+          <div
+            className={`flex items-start gap-3 rounded-lg px-4 py-3 shadow-lg ${
+              toast.variant === 'success'
+                ? 'bg-emerald-600 text-white'
+                : 'bg-rose-600 text-white'
+            }`}
+          >
+            <div className="text-sm font-medium">{toast.message}</div>
+            <button
+              type="button"
+              onClick={() => setToast(null)}
+              className="ml-2 text-white/80 hover:text-white"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
         <p className="text-gray-600 mt-1">Manage system users (Admin only)</p>
@@ -214,10 +249,17 @@ function UserManagement() {
                     <button
                       onClick={async () => {
                         try {
-                          await userAPI.approve(user.id);
+                          const response = await userAPI.approve(user.id);
+                          if (response?.sms?.failed > 0 || response?.sms?.skipped) {
+                            showToast(
+                              "Approval SMS was not sent. Please check SMS settings and the user's phone number."
+                            );
+                          } else {
+                            showToast("User approved and SMS sent.", 'success');
+                          }
                           await fetchUsers();
                         } catch (err) {
-                          alert(`Failed to approve user: ${err.message}`);
+                          showToast(`Failed to approve user: ${err.message}`);
                         }
                       }}
                       className="text-gray-900 hover:text-gray-700"
@@ -253,8 +295,8 @@ function UserManagement() {
           </div>
 
           {/* Desktop Table */}
-          <div className="hidden bg-white rounded-lg shadow overflow-hidden md:block">
-            <div className="overflow-x-auto">
+          <div className="hidden bg-white rounded-lg shadow overflow-x-auto md:block">
+            <div className="w-full">
               <table className="min-w-[900px] w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -329,14 +371,21 @@ function UserManagement() {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       {isSuperAdmin() && user.status === 'PENDING' && (
                         <button
-                          onClick={async () => {
-                            try {
-                              await userAPI.approve(user.id);
-                              await fetchUsers();
-                            } catch (err) {
-                              alert(`Failed to approve user: ${err.message}`);
+                        onClick={async () => {
+                          try {
+                            const response = await userAPI.approve(user.id);
+                            if (response?.sms?.failed > 0 || response?.sms?.skipped) {
+                              showToast(
+                                "Approval SMS was not sent. Please check SMS settings and the user's phone number."
+                              );
+                            } else {
+                              showToast("User approved and SMS sent.", 'success');
                             }
-                          }}
+                            await fetchUsers();
+                          } catch (err) {
+                            showToast(`Failed to approve user: ${err.message}`);
+                          }
+                        }}
                           className="text-gray-900 hover:text-gray-700 mr-4"
                         >
                           Approve
