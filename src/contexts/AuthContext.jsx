@@ -141,6 +141,37 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const startPasswordResetEmail = async (email) => {
+    try {
+      const response = await authAPI.startPasswordResetEmail(email);
+      return { success: true, data: response };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  };
+
+  const verifyPasswordResetEmail = async (email, code) => {
+    try {
+      const response = await authAPI.verifyPasswordResetEmail(email, code);
+      return { success: true, data: response };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  };
+
+  const completePasswordResetEmail = async (email, code, password) => {
+    try {
+      const response = await authAPI.completePasswordResetEmail(
+        email,
+        code,
+        password
+      );
+      return { success: true, data: response };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  };
+
   const logout = useCallback(() => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem(AUTH_TOKEN_KEY);
@@ -176,6 +207,9 @@ export const AuthProvider = ({ children }) => {
     register,
     startPhoneVerification,
     verifyPhone,
+    startPasswordResetEmail,
+    verifyPasswordResetEmail,
+    completePasswordResetEmail,
     logout,
     isAdmin,
     isSuperAdmin,

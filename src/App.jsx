@@ -6,6 +6,7 @@ import {
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Login from "./components/Login";
+import ForgotPassword from "./components/ForgotPassword";
 import Dashboard from "./components/Dashboard";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -47,6 +48,12 @@ function AppRoutes() {
       <Route
         path="/login"
         element={<Navigate to="/" replace />}
+      />
+      <Route
+        path="/forgot-password"
+        element={
+          isAuthenticated ? <Navigate to="/dashboard" replace /> : <ForgotPassword />
+        }
       />
       <Route
         path="/dashboard/*"

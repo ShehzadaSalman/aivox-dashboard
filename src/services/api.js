@@ -102,6 +102,27 @@ export const authAPI = {
       body: JSON.stringify({ email, code }),
     });
   },
+
+  startPasswordResetEmail: async (email) => {
+    return apiRequest("/api/auth/password/email/start", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+  },
+
+  verifyPasswordResetEmail: async (email, code) => {
+    return apiRequest("/api/auth/password/email/verify", {
+      method: "POST",
+      body: JSON.stringify({ email, code }),
+    });
+  },
+
+  completePasswordResetEmail: async (email, code, password) => {
+    return apiRequest("/api/auth/password/email/complete", {
+      method: "POST",
+      body: JSON.stringify({ email, code, password }),
+    });
+  },
 };
 
 // Agent Management APIs

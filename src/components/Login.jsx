@@ -1,6 +1,8 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { PhoneInput } from "react-international-phone";
+import "react-international-phone/style.css";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -14,8 +16,22 @@ function Login() {
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
-  const { login, register, startPhoneVerification, verifyPhone } = useAuth();
+  const {
+    login,
+    register,
+    startPhoneVerification,
+    verifyPhone,
+  } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.resetSuccess) {
+      setNotice("Password reset successfully. Please sign in.");
+      setError("");
+      navigate(".", { replace: true, state: {} });
+    }
+  }, [location.state, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -109,6 +125,7 @@ function Login() {
     }
   };
 
+
   return (
     <div className="relative flex items-center justify-center min-h-screen px-4 py-12 overflow-hidden bg-gradient-to-br from-amber-50 via-rose-50 to-lime-50">
       <div className="absolute rounded-full pointer-events-none -top-28 -left-28 h-72 w-72 bg-amber-200/40 blur-3xl" />
@@ -124,9 +141,13 @@ function Login() {
             AI Receptionist
           </div>
           <h1 className="mt-4 mb-2 text-2xl font-bold text-gray-900">
-            Welcome back
+            {isRegistering ? "Create your account" : "Welcome back"}
           </h1>
-          <p className="text-gray-600">Sign in to manage your voice agents</p>
+          <p className="text-gray-600">
+            {isRegistering
+              ? "Sign up to manage your voice agents"
+              : "Sign in to manage your voice agents"}
+          </p>
         </div>
 
         {!verificationEmail && (
@@ -177,12 +198,18 @@ function Login() {
                 >
                   Phone
                 </label>
-                <input
-                  id="phone"
-                  type="tel"
+                <PhoneInput
+                  defaultCountry="us"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full px-4 py-2 transition border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  onChange={(nextPhone) => setPhone(nextPhone)}
+                  className="w-full"
+                  inputClassName="w-full px-4 py-2 transition border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  countrySelectorStyleProps={{
+                    buttonClassName:
+                      "h-full px-3 border border-gray-300 rounded-lg bg-white",
+                    buttonContentWrapperClassName: "gap-2",
+                  }}
+                  inputProps={{ id: "phone" }}
                   placeholder="Enter your phone number"
                   required
                 />
@@ -206,6 +233,20 @@ function Login() {
                 required
               />
             </div>
+
+            {!isRegistering && (
+              <div className="text-right text-sm">
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate("/forgot-password");
+                  }}
+                  className="text-gray-900 underline hover:text-gray-700"
+                >
+                  Forgot password?
+                </button>
+              </div>
+            )}
 
             {error && (
               <div className="p-3 text-sm text-center text-red-500 rounded-lg bg-red-50">
