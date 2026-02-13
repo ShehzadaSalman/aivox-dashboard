@@ -12,7 +12,7 @@ import Settings from "./Settings";
 
 function Dashboard() {
   const location = useLocation();
-  const { logout, user, isAdmin } = useAuth();
+  const { logout, user, isAdmin, isSuperAdmin } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -23,8 +23,15 @@ function Dashboard() {
     { path: "/dashboard/agents", label: "Agents", icon: "👥" },
     { path: "/dashboard/calls", label: "Calls", icon: "📞" },
     { path: "/dashboard/leads", label: "Leads", icon: "🧾" },
-    { path: "/dashboard/appointments", label: "Appointments", icon: "📅" },
   ];
+
+  if (!isSuperAdmin()) {
+    navLinks.push({
+      path: "/dashboard/appointments",
+      label: "Appointments",
+      icon: "📅",
+    });
+  }
 
   if (isAdmin()) {
     navLinks.push({ path: "/dashboard/users", label: "Users", icon: "👤" });
@@ -65,7 +72,7 @@ function Dashboard() {
               <span className="sr-only">Toggle navigation</span>
               {mobileOpen ? <span className="text-2xl">×</span> : <span className="text-2xl">☰</span>}
             </button>
-            <img src="/new-logo-website.png" alt="AI Vox Agency" className="h-12" />
+            <img src="/sisteme-logo.png" alt="AI Vox Agency" className="h-12" />
           </div>
           <div className="relative" ref={userMenuRef}>
             <button
@@ -163,7 +170,7 @@ function Dashboard() {
             />
             <div className="absolute top-0 left-0 h-full p-4 bg-white shadow-xl w-72">
               <div className="flex items-center justify-between mb-4">
-                <img src="/new-logo-website.png" alt="AI Vox Agency" className="h-10" />
+                <img src="/sisteme-logo.png" alt="AI Vox Agency" className="h-10" />
                 <button
                   type="button"
                   onClick={() => setMobileOpen(false)}
@@ -216,7 +223,12 @@ function Dashboard() {
             <Route path="/agents" element={<AgentManagement />} />
             <Route path="/calls" element={<CallManagement />} />
             <Route path="/leads" element={<Leads />} />
-            <Route path="/appointments" element={<Appointments />} />
+            <Route
+              path="/appointments"
+              element={
+                isSuperAdmin() ? <Navigate to="/dashboard" replace /> : <Appointments />
+              }
+            />
             <Route path="/profile" element={<Profile />} />
             <Route path="/settings" element={<Settings />} />
             {isAdmin() && <Route path="/users" element={<UserManagement />} />}
