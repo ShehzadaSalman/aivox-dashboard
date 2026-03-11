@@ -1,12 +1,107 @@
+@import url("https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@layer base {
+  html {
+    font-family: "Source Sans 3", "Helvetica Neue", Arial, sans-serif;
+    background-color: #f5f7fa;
+    color: #2d3748;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    margin: 0;
+    background-color: #f5f7fa;
+    color: #2d3748;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: "Oswald", "Arial Narrow", sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: #0d1f35;
+  }
+
+  h5,
+  h6 {
+    font-family: "Oswald", "Arial Narrow", sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #0d1f35;
+  }
+}
+
+@layer components {
+  .card-surface {
+    background-color: #ffffff;
+    border: 1px solid #d6e0ef;
+    box-shadow: 0 20px 60px -40px rgba(13, 31, 53, 0.7);
+  }
+
+  .section-divider {
+    border-bottom: 1px solid #d6e0ef;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    background-color: #d62d20;
+    padding: 0.5rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: #ffffff;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    border: 1px solid #d6e0ef;
+    background-color: #ffffff;
+    padding: 0.5rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: #0d1f35;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .input-base {
+    width: 100%;
+    border-radius: 6px;
+    border: 1px solid #d6e0ef;
+    background-color: #ffffff;
+    padding: 0.5rem 1rem;
+    color: #2d3748;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+}
+
+.btn-primary:hover {
+  background-color: #b52318;
+}
+
+.btn-secondary:hover {
+  border-color: #1f3a5f;
+  color: #1f3a5f;
+}
+
+.input-base:focus {
+  border-color: #d62d20;
+  box-shadow: 0 0 0 3px rgba(214, 45, 32, 0.2);
 }

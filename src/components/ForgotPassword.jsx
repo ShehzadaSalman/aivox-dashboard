@@ -73,23 +73,22 @@ function ForgotPassword() {
   };
 
   return (
-    <div className="relative flex items-center justify-center min-h-screen px-4 py-12 overflow-hidden bg-gradient-to-br from-amber-50 via-rose-50 to-lime-50">
-      <div className="absolute rounded-full pointer-events-none -top-28 -left-28 h-72 w-72 bg-amber-200/40 blur-3xl" />
-      <div className="absolute rounded-full pointer-events-none -bottom-24 -right-24 h-80 w-80 bg-rose-200/40 blur-3xl" />
-      <div className="w-full max-w-md p-8 border shadow-xl bg-white/80 backdrop-blur border-white/60 rounded-2xl">
+    <div className="relative flex items-center justify-center min-h-screen px-4 py-12 overflow-hidden bg-surface-50">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(13,31,53,0.08),_transparent_55%),radial-gradient(circle_at_bottom,_rgba(214,45,32,0.1),_transparent_50%),radial-gradient(circle_at_left,_rgba(240,165,0,0.08),_transparent_45%)]" />
+      <div className="relative w-full max-w-md p-8 card-surface rounded-2xl">
         <div className="mb-6 text-center">
           <img
             src="/new-logo-website.png"
             alt="AI Vox Agency"
-            className="h-20 mx-auto mb-4"
+            className="h-16 mx-auto mb-4"
           />
-          <div className="inline-flex items-center gap-2 px-3 py-1 text-xs font-semibold tracking-wide uppercase rounded-full bg-amber-100 text-amber-800">
+          <div className="inline-flex items-center gap-2 px-3 py-1 text-xs font-semibold tracking-[0.3em] uppercase rounded-full bg-gold-500/15 text-gold-600">
             Reset Password
           </div>
-          <h1 className="mt-4 mb-2 text-2xl font-bold text-gray-900">
+          <h1 className="mt-4 mb-2 text-3xl font-semibold text-navy-900">
             Recover your account
           </h1>
-          <p className="text-gray-600">
+          <p className="text-ink-600">
             We will email you a 6-digit reset code.
           </p>
         </div>
@@ -98,7 +97,7 @@ function ForgotPassword() {
           <button
             type="button"
             onClick={() => navigate("/login")}
-            className="text-sm font-semibold text-gray-900 underline hover:text-gray-700"
+            className="text-sm font-semibold text-navy-900 underline decoration-accent-600/40 hover:text-accent-600"
           >
             Back to login
           </button>
@@ -109,7 +108,7 @@ function ForgotPassword() {
             <div>
               <label
                 htmlFor="resetEmail"
-                className="block mb-2 text-sm font-medium text-gray-700"
+                className="block mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-ink-600"
               >
                 Email
               </label>
@@ -118,19 +117,19 @@ function ForgotPassword() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 transition border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="input-base"
                 placeholder="Enter your email"
                 required
               />
             </div>
 
             {error && (
-              <div className="p-3 text-sm text-center text-red-500 rounded-lg bg-red-50">
+              <div className="p-3 text-sm text-center text-accent-700 rounded-md bg-accent-600/10 border border-accent-600/20">
                 {error}
               </div>
             )}
             {notice && (
-              <div className="p-3 text-sm text-center rounded-lg text-emerald-600 bg-emerald-50">
+              <div className="p-3 text-sm text-center rounded-md text-navy-900 bg-navy-50 border border-navy-100">
                 {notice}
               </div>
             )}
@@ -138,7 +137,7 @@ function ForgotPassword() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full px-4 py-2 font-medium text-white transition duration-200 bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Sending..." : "Send reset code"}
             </button>
@@ -150,7 +149,7 @@ function ForgotPassword() {
             <div>
               <label
                 htmlFor="resetCode"
-                className="block mb-2 text-sm font-medium text-gray-700"
+                className="block mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-ink-600"
               >
                 Reset Code
               </label>
@@ -159,7 +158,7 @@ function ForgotPassword() {
                 type="text"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                className="w-full px-4 py-2 transition border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="input-base"
                 placeholder="Enter the 6-digit code"
                 required
               />
@@ -167,7 +166,7 @@ function ForgotPassword() {
             <div>
               <label
                 htmlFor="newPassword"
-                className="block mb-2 text-sm font-medium text-gray-700"
+                className="block mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-ink-600"
               >
                 New Password
               </label>
@@ -176,7 +175,7 @@ function ForgotPassword() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 transition border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="input-base"
                 placeholder="Enter your new password"
                 required
               />
@@ -184,7 +183,7 @@ function ForgotPassword() {
             <div>
               <label
                 htmlFor="confirmPassword"
-                className="block mb-2 text-sm font-medium text-gray-700"
+                className="block mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-ink-600"
               >
                 Confirm Password
               </label>
@@ -193,19 +192,19 @@ function ForgotPassword() {
                 type="password"
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
-                className="w-full px-4 py-2 transition border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="input-base"
                 placeholder="Re-enter your new password"
                 required
               />
             </div>
 
             {error && (
-              <div className="p-3 text-sm text-center text-red-500 rounded-lg bg-red-50">
+              <div className="p-3 text-sm text-center text-accent-700 rounded-md bg-accent-600/10 border border-accent-600/20">
                 {error}
               </div>
             )}
             {notice && (
-              <div className="p-3 text-sm text-center rounded-lg text-emerald-600 bg-emerald-50">
+              <div className="p-3 text-sm text-center rounded-md text-navy-900 bg-navy-50 border border-navy-100">
                 {notice}
               </div>
             )}
@@ -213,7 +212,7 @@ function ForgotPassword() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full px-4 py-2 font-medium text-white transition duration-200 bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Resetting..." : "Reset password"}
             </button>
@@ -222,18 +221,18 @@ function ForgotPassword() {
               type="button"
               onClick={handleStart}
               disabled={loading}
-              className="w-full text-gray-900 underline hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full font-semibold text-navy-900 underline decoration-accent-600/40 hover:text-accent-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Resend reset code
             </button>
           </form>
         )}
 
-        <div className="mt-6 text-sm text-center text-gray-600">
+        <div className="mt-6 text-sm text-center text-ink-600">
           <button
             type="button"
             onClick={() => navigate("/login")}
-            className="text-gray-900 underline hover:text-gray-700"
+            className="font-semibold text-navy-900 underline decoration-accent-600/40 hover:text-accent-600"
           >
             Back to sign in
           </button>

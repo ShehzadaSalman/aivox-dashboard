@@ -127,23 +127,22 @@ function Login() {
 
 
   return (
-    <div className="relative flex items-center justify-center min-h-screen px-4 py-12 overflow-hidden bg-gradient-to-br from-amber-50 via-rose-50 to-lime-50">
-      <div className="absolute rounded-full pointer-events-none -top-28 -left-28 h-72 w-72 bg-amber-200/40 blur-3xl" />
-      <div className="absolute rounded-full pointer-events-none -bottom-24 -right-24 h-80 w-80 bg-rose-200/40 blur-3xl" />
-      <div className="w-full max-w-md p-8 border shadow-xl bg-white/80 backdrop-blur border-white/60 rounded-2xl">
+    <div className="relative flex items-center justify-center min-h-screen px-4 py-12 overflow-hidden bg-surface-50">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(13,31,53,0.08),_transparent_55%),radial-gradient(circle_at_bottom,_rgba(214,45,32,0.1),_transparent_50%),radial-gradient(circle_at_left,_rgba(240,165,0,0.08),_transparent_45%)]" />
+      <div className="relative w-full max-w-md p-8 card-surface rounded-2xl">
         <div className="mb-8 text-center">
           <img
-            src="/new-logo-website.png"
-            alt="AI Vox Agency"
+            src="/candibly-vertical-logo.png"
+            alt="Candibly"
             className="h-20 mx-auto mb-4"
           />
-          <div className="inline-flex items-center gap-2 px-3 py-1 text-xs font-semibold tracking-wide uppercase rounded-full bg-amber-100 text-amber-800">
+          <div className="inline-flex items-center gap-2 px-3 py-1 text-xs font-semibold tracking-[0.3em] uppercase rounded-full bg-gold-500/15 text-gold-600">
             AI Receptionist
           </div>
-          <h1 className="mt-4 mb-2 text-2xl font-bold text-gray-900">
+          <h1 className="mt-4 mb-2 text-3xl font-semibold text-navy-900">
             {isRegistering ? "Create your account" : "Welcome back"}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-ink-600">
             {isRegistering
               ? "Sign up to manage your voice agents"
               : "Sign in to manage your voice agents"}
@@ -156,7 +155,7 @@ function Login() {
               <div>
                 <label
                   htmlFor="name"
-                  className="block mb-2 text-sm font-medium text-gray-700"
+                  className="block mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-ink-600"
                 >
                   Name
                 </label>
@@ -165,7 +164,7 @@ function Login() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-4 py-2 transition border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  className="input-base"
                   placeholder="Enter your name"
                   required
                 />
@@ -175,7 +174,7 @@ function Login() {
             <div>
               <label
                 htmlFor="email"
-                className="block mb-2 text-sm font-medium text-gray-700"
+                className="block mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-ink-600"
               >
                 Email
               </label>
@@ -184,7 +183,7 @@ function Login() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 transition border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="input-base"
                 placeholder="Enter your email"
                 required
               />
@@ -192,26 +191,26 @@ function Login() {
 
             {isRegistering && (
               <div>
-                <label
-                  htmlFor="phone"
-                  className="block mb-2 text-sm font-medium text-gray-700"
-                >
-                  Phone
-                </label>
-                <PhoneInput
-                  defaultCountry="us"
-                  value={phone}
-                  onChange={(nextPhone) => setPhone(nextPhone)}
-                  className="w-full"
-                  inputClassName="w-full px-4 py-2 transition border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                  countrySelectorStyleProps={{
-                    buttonClassName:
-                      "h-full px-3 border border-gray-300 rounded-lg bg-white",
-                    buttonContentWrapperClassName: "gap-2",
-                  }}
-                  inputProps={{ id: "phone" }}
-                  placeholder="Enter your phone number"
-                  required
+              <label
+                htmlFor="phone"
+                className="block mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-ink-600"
+              >
+                Phone
+              </label>
+              <PhoneInput
+                defaultCountry="us"
+                value={phone}
+                onChange={(nextPhone) => setPhone(nextPhone)}
+                className="w-full"
+                inputClassName="w-full rounded-md border border-navy-100 bg-white px-4 py-2 text-ink-900 outline-none transition focus:border-accent-600 focus:ring-2 focus:ring-accent-600/20"
+                countrySelectorStyleProps={{
+                  buttonClassName:
+                    "h-full px-3 border border-navy-100 rounded-md bg-white text-ink-900",
+                  buttonContentWrapperClassName: "gap-2",
+                }}
+                inputProps={{ id: "phone" }}
+                placeholder="Enter your phone number"
+                required
                 />
               </div>
             )}
@@ -219,7 +218,7 @@ function Login() {
             <div>
               <label
                 htmlFor="password"
-                className="block mb-2 text-sm font-medium text-gray-700"
+                className="block mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-ink-600"
               >
                 Password
               </label>
@@ -228,7 +227,7 @@ function Login() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 transition border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="input-base"
                 placeholder="Enter your password"
                 required
               />
@@ -241,7 +240,7 @@ function Login() {
                   onClick={() => {
                     navigate("/forgot-password");
                   }}
-                  className="text-gray-900 underline hover:text-gray-700"
+                  className="font-semibold text-navy-900 underline decoration-accent-600/40 hover:text-accent-600"
                 >
                   Forgot password?
                 </button>
@@ -249,12 +248,12 @@ function Login() {
             )}
 
             {error && (
-              <div className="p-3 text-sm text-center text-red-500 rounded-lg bg-red-50">
+              <div className="p-3 text-sm text-center text-accent-700 rounded-md bg-accent-600/10 border border-accent-600/20">
                 {error}
               </div>
             )}
             {notice && (
-              <div className="p-3 text-sm text-center rounded-lg text-emerald-600 bg-emerald-50">
+              <div className="p-3 text-sm text-center rounded-md text-navy-900 bg-navy-50 border border-navy-100">
                 {notice}
               </div>
             )}
@@ -262,7 +261,7 @@ function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full px-4 py-2 font-medium text-white transition duration-200 bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Processing..." : isRegistering ? "Sign Up" : "Sign In"}
             </button>
@@ -270,9 +269,9 @@ function Login() {
         )}
 
         {verificationEmail && (
-          <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50/60 p-5">
-            <div className="text-sm font-semibold text-amber-900">Step 2: Verify your phone</div>
-            <p className="mt-1 text-sm text-amber-800">
+          <div className="mt-6 rounded-xl border border-navy-100 bg-navy-50/80 p-5">
+            <div className="text-sm font-semibold uppercase tracking-[0.2em] text-navy-900">Step 2: Verify your phone</div>
+            <p className="mt-1 text-sm text-ink-600">
               Enter the verification code below (not in the login form). We sent it to the phone on
               your signup.
             </p>
@@ -280,7 +279,7 @@ function Login() {
               <div>
                 <label
                   htmlFor="verificationCode"
-                  className="block mb-2 text-sm font-medium text-gray-700"
+                  className="block mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-ink-600"
                 >
                   Verification Code
                 </label>
@@ -289,7 +288,7 @@ function Login() {
                   type="text"
                   value={verificationCode}
                   onChange={(e) => setVerificationCode(e.target.value)}
-                  className="w-full px-4 py-2 transition border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  className="input-base"
                   placeholder="Enter the 6-digit code"
                   required
                 />
@@ -297,7 +296,7 @@ function Login() {
               <button
                 type="submit"
                 disabled={verificationLoading}
-                className="w-full px-4 py-2 font-medium text-white transition duration-200 bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {verificationLoading ? "Verifying..." : "Verify Phone"}
               </button>
@@ -305,7 +304,7 @@ function Login() {
                 type="button"
                 onClick={handleResendCode}
                 disabled={verificationLoading}
-                className="w-full text-gray-900 underline hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full font-semibold text-navy-900 underline decoration-accent-600/40 hover:text-accent-600 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Resend verification code
               </button>
@@ -314,14 +313,14 @@ function Login() {
         )}
 
         {!verificationEmail && (
-          <div className="mt-6 text-sm text-center text-gray-600">
+          <div className="mt-6 text-sm text-center text-ink-600">
             <button
               type="button"
               onClick={() => {
                 setIsRegistering(!isRegistering);
                 setError("");
               }}
-              className="text-gray-900 underline hover:text-gray-700"
+              className="font-semibold text-navy-900 underline decoration-accent-600/40 hover:text-accent-600"
             >
               {isRegistering
                 ? "Already have an account? Sign in"

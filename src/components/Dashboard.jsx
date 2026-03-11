@@ -58,14 +58,14 @@ function Dashboard() {
   const userInitial = user?.name?.trim()?.[0] || user?.email?.[0] || "U";
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <header className="sticky top-0 z-30 border-b border-gray-200 bg-white/90 backdrop-blur">
+    <div className="min-h-screen bg-surface-50">
+      <header className="sticky top-0 z-30 border-b border-navy-800 bg-navy-900 text-white">
         <div className="flex items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => setMobileOpen((open) => !open)}
-              className="inline-flex items-center justify-center p-2 text-gray-700 rounded-md hover:bg-gray-100 md:hidden"
+              className="inline-flex items-center justify-center p-2 text-white rounded-md hover:bg-navy-800 md:hidden"
               aria-controls="mobile-menu"
               aria-expanded={mobileOpen}
             >
@@ -77,31 +77,31 @@ function Dashboard() {
           <div className="relative" ref={userMenuRef}>
             <button
               onClick={() => setUserMenuOpen((open) => !open)}
-              className="flex items-center gap-3 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 shadow-sm hover:bg-gray-50"
+              className="flex items-center gap-3 rounded-full border border-navy-700 bg-navy-800 px-3 py-1.5 text-sm text-white shadow-sm hover:bg-navy-700"
             >
-              <span className="flex items-center justify-center w-8 h-8 text-white bg-gray-900 rounded-full">
+              <span className="flex items-center justify-center w-8 h-8 text-white bg-accent-600 rounded-full">
                 {userInitial.toUpperCase()}
               </span>
               <span className="hidden lg:inline">{user?.email}</span>
               <span className="text-xs">▾</span>
             </button>
             {userMenuOpen && (
-              <div className="absolute right-0 z-10 w-48 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg">
+              <div className="absolute right-0 z-10 w-48 mt-2 bg-white border border-navy-100 rounded-lg shadow-lg text-ink-900">
                 <Link
                   to="/dashboard/profile"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  className="block px-4 py-2 text-sm text-ink-900 hover:bg-navy-50"
                 >
                   Profile
                 </Link>
                 <Link
                   to="/dashboard/settings"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  className="block px-4 py-2 text-sm text-ink-900 hover:bg-navy-50"
                 >
                   Settings
                 </Link>
                 <button
                   onClick={logout}
-                  className="block w-full px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-100"
+                  className="block w-full px-4 py-2 text-sm text-left text-ink-900 hover:bg-navy-50"
                 >
                   Logout
                 </button>
@@ -113,7 +113,7 @@ function Dashboard() {
 
       <div className="flex">
         <aside
-          className={`sticky top-16 hidden h-[calc(100vh-4rem)] flex-shrink-0 border-r border-gray-200 bg-white p-4 md:flex md:flex-col ${sidebarCollapsed ? "w-20" : "w-64"
+          className={`sticky top-16 hidden h-[calc(100vh-4rem)] flex-shrink-0 border-r border-navy-800 bg-navy-900 p-4 md:flex md:flex-col ${sidebarCollapsed ? "w-20" : "w-64"
             }`}
         >
           <div className="flex-1 space-y-1">
@@ -121,9 +121,9 @@ function Dashboard() {
               <Link
                 key={link.path}
                 to={link.path}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${location.pathname === link.path
-                  ? "bg-gray-900 text-white"
-                  : "text-gray-700 hover:bg-gray-100"
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold uppercase tracking-[0.18em] transition ${location.pathname === link.path
+                  ? "bg-accent-600 text-white shadow-soft"
+                  : "text-navy-100 hover:bg-navy-800"
                   }`}
               >
                 <span className="text-lg">{link.icon}</span>
@@ -131,17 +131,17 @@ function Dashboard() {
               </Link>
             ))}
           </div>
-          <div className="pt-4 space-y-1 border-t border-gray-200">
+          <div className="pt-4 space-y-1 border-t border-navy-800">
             <Link
               to="/dashboard/profile"
-              className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100"
+              className="flex items-center gap-3 px-3 py-2 text-sm font-semibold uppercase tracking-[0.18em] text-navy-100 rounded-md hover:bg-navy-800"
             >
               <span className="text-lg">👤</span>
               {!sidebarCollapsed && <span>Profile</span>}
             </Link>
             <Link
               to="/dashboard/settings"
-              className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100"
+              className="flex items-center gap-3 px-3 py-2 text-sm font-semibold uppercase tracking-[0.18em] text-navy-100 rounded-md hover:bg-navy-800"
             >
               <span className="text-lg">⚙️</span>
               {!sidebarCollapsed && <span>Settings</span>}
@@ -149,7 +149,7 @@ function Dashboard() {
             <button
               type="button"
               onClick={() => setSidebarCollapsed((value) => !value)}
-              className="flex items-center w-full gap-3 px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100"
+              className="flex items-center w-full gap-3 px-3 py-2 text-sm font-semibold uppercase tracking-[0.18em] text-navy-100 rounded-md hover:bg-navy-800"
               aria-pressed={sidebarCollapsed}
             >
               <span className="text-lg">{sidebarCollapsed ? "➡️" : "⬅️"}</span>
@@ -165,16 +165,16 @@ function Dashboard() {
             <button
               type="button"
               aria-label="Close navigation"
-              className="absolute inset-0 bg-gray-900/40"
+              className="absolute inset-0 bg-navy-900/60"
               onClick={() => setMobileOpen(false)}
             />
-            <div className="absolute top-0 left-0 h-full p-4 bg-white shadow-xl w-72">
+            <div className="absolute top-0 left-0 h-full p-4 bg-navy-900 text-white shadow-xl w-72">
               <div className="flex items-center justify-between mb-4">
                 <img src="/sisteme-logo.png" alt="AI Vox Agency" className="h-10" />
                 <button
                   type="button"
                   onClick={() => setMobileOpen(false)}
-                  className="p-2 text-gray-700 rounded-md hover:bg-gray-100"
+                  className="p-2 text-white rounded-md hover:bg-navy-800"
                 >
                   ×
                 </button>
@@ -184,9 +184,9 @@ function Dashboard() {
                   <Link
                     key={link.path}
                     to={link.path}
-                    className={`block rounded-lg px-4 py-2 text-sm font-medium transition ${location.pathname === link.path
-                      ? "bg-gray-900 text-white"
-                      : "text-gray-700 hover:bg-gray-100"
+                    className={`block rounded-md px-4 py-2 text-sm font-semibold uppercase tracking-[0.18em] transition ${location.pathname === link.path
+                      ? "bg-accent-600 text-white shadow-soft"
+                      : "text-navy-100 hover:bg-navy-800"
                       }`}
                   >
                     <span className="mr-2">{link.icon}</span>
@@ -195,24 +195,24 @@ function Dashboard() {
                 ))}
                 <Link
                   to="/dashboard/profile"
-                  className="block px-4 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100"
+                  className="block px-4 py-2 text-sm font-semibold uppercase tracking-[0.18em] text-navy-100 rounded-md hover:bg-navy-800"
                 >
                   👤 Profile
                 </Link>
                 <Link
                   to="/dashboard/settings"
-                  className="block px-4 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100"
+                  className="block px-4 py-2 text-sm font-semibold uppercase tracking-[0.18em] text-navy-100 rounded-md hover:bg-navy-800"
                 >
                   ⚙️ Settings
                 </Link>
                 <button
                   onClick={logout}
-                  className="w-full px-4 py-2 text-sm font-medium text-left text-white transition bg-gray-900 rounded-lg hover:bg-gray-800"
+                  className="w-full px-4 py-2 text-sm font-semibold uppercase tracking-[0.18em] text-left text-white transition bg-accent-600 rounded-md hover:bg-accent-700"
                 >
                   Logout
                 </button>
               </div>
-              <div className="mt-4 text-xs text-gray-500">{user?.email}</div>
+              <div className="mt-4 text-xs text-navy-100">{user?.email}</div>
             </div>
           </div>
         )}

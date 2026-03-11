@@ -63,8 +63,8 @@ function DashboardOverview() {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-600">Error: {error.message || 'Failed to load overview.'}</p>
+      <div className="bg-accent-600/10 border border-accent-600/20 rounded-md p-4">
+        <p className="text-accent-700">Error: {error.message || 'Failed to load overview.'}</p>
       </div>
     );
   }
@@ -73,8 +73,8 @@ function DashboardOverview() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard Overview</h1>
-          <p className="text-gray-600">Welcome to your AI Receptionist Dashboard</p>
+          <h1 className="text-3xl font-semibold text-navy-900 mb-2">Dashboard Overview</h1>
+          <p className="text-ink-600">Welcome to your AI Receptionist Dashboard</p>
         </div>
       </div>
 
@@ -115,20 +115,20 @@ function DashboardOverview() {
       {/* Analytics Section */}
       {analytics && showCost && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Cost Analysis</h2>
+          <div className="card-surface rounded-lg p-6">
+            <h2 className="text-xl font-semibold text-navy-900 mb-4">Cost Analysis</h2>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">Total Cost</span>
-                <span className="font-semibold">{formatUSD(totalCostCents)}</span>
+                <span className="text-ink-600">Total Cost</span>
+                <span className="font-semibold text-ink-900">{formatUSD(totalCostCents)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">Average Cost per Call</span>
-                <span className="font-semibold">{formatUSD(avgCostCents)}</span>
+                <span className="text-ink-600">Average Cost per Call</span>
+                <span className="font-semibold text-ink-900">{formatUSD(avgCostCents)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">Total Duration</span>
-                <span className="font-semibold">
+                <span className="text-ink-600">Total Duration</span>
+                <span className="font-semibold text-ink-900">
                   {Math.floor((analytics.totalDurationSeconds || 0) / 3600)}h{' '}
                   {Math.floor(((analytics.totalDurationSeconds || 0) % 3600) / 60)}m
                 </span>
@@ -156,14 +156,14 @@ function DashboardOverview() {
                 ]}
                 margin={{ top: 8, right: 12, left: -12, bottom: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#d6e0ef" />
                 <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={11} />
                 <YAxis tickLine={false} axisLine={false} fontSize={11} />
                 <Tooltip
-                  contentStyle={{ borderRadius: 10, borderColor: '#e5e7eb' }}
+                  contentStyle={{ borderRadius: 10, borderColor: '#d6e0ef' }}
                   labelStyle={{ fontWeight: 600 }}
                 />
-                <Bar dataKey="value" fill="#2563eb" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="value" fill="#d62d20" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -179,20 +179,20 @@ function DashboardOverview() {
               <AreaChart data={chartData} margin={{ top: 8, right: 12, left: -12, bottom: 0 }}>
                 <defs>
                   <linearGradient id="callsFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0.02} />
+                    <stop offset="5%" stopColor="#162d4a" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#162d4a" stopOpacity={0.02} />
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="date" tickLine={false} axisLine={false} fontSize={11} />
                 <YAxis tickLine={false} axisLine={false} fontSize={11} />
                 <Tooltip
-                  contentStyle={{ borderRadius: 10, borderColor: '#e5e7eb' }}
+                  contentStyle={{ borderRadius: 10, borderColor: '#d6e0ef' }}
                   labelStyle={{ fontWeight: 600 }}
                 />
                 <Area
                   type="monotone"
                   dataKey="calls"
-                  stroke="#2563eb"
+                  stroke="#162d4a"
                   fill="url(#callsFill)"
                   strokeWidth={2.5}
                 />
@@ -219,13 +219,13 @@ function DashboardOverview() {
           <div className="space-y-4">
             <StackedBar
               segments={[
-                { label: 'Successful', value: successfulCalls, color: 'bg-emerald-500' },
-                { label: 'Failed', value: failedCalls, color: 'bg-rose-400' },
+                { label: 'Successful', value: successfulCalls, color: 'bg-navy-700' },
+                { label: 'Failed', value: failedCalls, color: 'bg-accent-600' },
               ]}
             />
-            <div className="flex items-center justify-between text-sm text-gray-600">
+            <div className="flex items-center justify-between text-sm text-ink-600">
               <span>Success rate</span>
-              <span className="font-semibold text-gray-900">
+              <span className="font-semibold text-ink-900">
                 {totalCalls ? ((successfulCalls / totalCalls) * 100).toFixed(1) : '0.0'}%
               </span>
             </div>
@@ -245,20 +245,20 @@ function DashboardOverview() {
               <AreaChart data={chartData} margin={{ top: 8, right: 12, left: -12, bottom: 0 }}>
                 <defs>
                   <linearGradient id="costFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#16a34a" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#16a34a" stopOpacity={0.02} />
+                    <stop offset="5%" stopColor="#d62d20" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#d62d20" stopOpacity={0.02} />
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="date" tickLine={false} axisLine={false} fontSize={11} />
                 <YAxis tickLine={false} axisLine={false} fontSize={11} />
                 <Tooltip
-                  contentStyle={{ borderRadius: 10, borderColor: '#e5e7eb' }}
+                  contentStyle={{ borderRadius: 10, borderColor: '#d6e0ef' }}
                   labelStyle={{ fontWeight: 600 }}
                 />
                 <Area
                   type="monotone"
                   dataKey="cost"
-                  stroke="#16a34a"
+                  stroke="#d62d20"
                   fill="url(#costFill)"
                   strokeWidth={2.5}
                 />
@@ -273,35 +273,35 @@ function DashboardOverview() {
 
 function StatCard({ title, value, subtitle, icon, color }) {
   const colorClasses = {
-    blue: 'bg-blue-50 border-blue-200',
-    green: 'bg-green-50 border-green-200',
-    purple: 'bg-purple-50 border-purple-200',
-    indigo: 'bg-indigo-50 border-indigo-200',
+    blue: 'border-l-4 border-accent-600',
+    green: 'border-l-4 border-gold-500',
+    purple: 'border-l-4 border-navy-700',
+    indigo: 'border-l-4 border-accent-700',
   };
 
   return (
-    <div className={`bg-white rounded-lg shadow p-6 border-2 ${colorClasses[color]}`}>
+    <div className={`card-surface rounded-lg p-6 ${colorClasses[color]}`}>
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-medium text-gray-600">{title}</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-600">{title}</h3>
         <span className="text-2xl">{icon}</span>
       </div>
-      <div className="text-3xl font-bold text-gray-900 mb-1">{value}</div>
-      <div className="text-sm text-gray-500">{subtitle}</div>
+      <div className="text-3xl font-semibold text-ink-900 mb-1">{value}</div>
+      <div className="text-sm text-ink-500">{subtitle}</div>
     </div>
   );
 }
 
 function ChartCard({ title, subtitle, stat, secondary, children }) {
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="card-surface rounded-lg p-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-          <p className="text-sm text-gray-500">{subtitle}</p>
+          <h2 className="text-lg font-semibold text-navy-900">{title}</h2>
+          <p className="text-sm text-ink-500">{subtitle}</p>
         </div>
         <div className="text-right">
-          <div className="text-sm font-semibold text-gray-900">{stat}</div>
-          <div className="text-xs text-gray-500">{secondary}</div>
+          <div className="text-sm font-semibold text-ink-900">{stat}</div>
+          <div className="text-xs text-ink-500">{secondary}</div>
         </div>
       </div>
       <div className="mt-4">{children}</div>
@@ -324,7 +324,7 @@ function StackedBar({ segments }) {
   const total = segments.reduce((sum, segment) => sum + segment.value, 0);
   return (
     <div className="space-y-3">
-      <div className="flex h-3 overflow-hidden rounded-full bg-gray-100">
+      <div className="flex h-3 overflow-hidden rounded-full bg-navy-50">
         {segments.map((segment) => (
           <div
             key={segment.label}
@@ -333,7 +333,7 @@ function StackedBar({ segments }) {
           />
         ))}
       </div>
-      <div className="flex items-center justify-between text-xs text-gray-500">
+      <div className="flex items-center justify-between text-xs text-ink-500">
         {segments.map((segment) => (
           <div key={segment.label} className="flex items-center gap-2">
             <span className={`h-2 w-2 rounded-full ${segment.color}`} />
@@ -349,12 +349,12 @@ function StackedBar({ segments }) {
 
 function buildStatusSegments(callsByStatus = {}) {
   const colors = [
-    'bg-emerald-500',
-    'bg-amber-400',
-    'bg-rose-400',
-    'bg-sky-500',
-    'bg-indigo-500',
-    'bg-slate-400',
+    'bg-accent-600',
+    'bg-gold-500',
+    'bg-navy-700',
+    'bg-navy-500',
+    'bg-accent-500',
+    'bg-navy-100',
   ];
   return Object.entries(callsByStatus).map(([status, value], index) => ({
     label: formatStatusLabel(status),
@@ -375,30 +375,30 @@ function DashboardSkeleton() {
     <div className="space-y-6 animate-pulse">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <div className="h-7 w-48 bg-gray-200 rounded mb-2" />
-          <div className="h-4 w-64 bg-gray-200 rounded" />
+          <div className="h-7 w-48 bg-navy-100 rounded mb-2" />
+          <div className="h-4 w-64 bg-navy-100 rounded" />
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="bg-white rounded-lg shadow p-6">
-            <div className="h-4 w-24 bg-gray-200 rounded mb-3" />
-            <div className="h-8 w-24 bg-gray-200 rounded mb-2" />
-            <div className="h-3 w-28 bg-gray-200 rounded" />
+          <div key={index} className="card-surface rounded-lg p-6">
+            <div className="h-4 w-24 bg-navy-100 rounded mb-3" />
+            <div className="h-8 w-24 bg-navy-100 rounded mb-2" />
+            <div className="h-3 w-28 bg-navy-100 rounded" />
           </div>
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {Array.from({ length: 2 }).map((_, index) => (
-          <div key={index} className="bg-white rounded-lg shadow p-6">
-            <div className="h-5 w-40 bg-gray-200 rounded mb-4" />
+          <div key={index} className="card-surface rounded-lg p-6">
+            <div className="h-5 w-40 bg-navy-100 rounded mb-4" />
             <div className="space-y-3">
               {Array.from({ length: 4 }).map((__, rowIndex) => (
                 <div key={rowIndex} className="flex justify-between items-center">
-                  <div className="h-3 w-32 bg-gray-200 rounded" />
-                  <div className="h-3 w-16 bg-gray-200 rounded" />
+                  <div className="h-3 w-32 bg-navy-100 rounded" />
+                  <div className="h-3 w-16 bg-navy-100 rounded" />
                 </div>
               ))}
             </div>
@@ -408,18 +408,18 @@ function DashboardSkeleton() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {Array.from({ length: 3 }).map((_, index) => (
-          <div key={index} className="bg-white rounded-lg shadow p-6">
+          <div key={index} className="card-surface rounded-lg p-6">
             <div className="flex justify-between items-start gap-4 mb-4">
               <div className="space-y-2">
-                <div className="h-4 w-32 bg-gray-200 rounded" />
-                <div className="h-3 w-24 bg-gray-200 rounded" />
+                <div className="h-4 w-32 bg-navy-100 rounded" />
+                <div className="h-3 w-24 bg-navy-100 rounded" />
               </div>
               <div className="space-y-2">
-                <div className="h-3 w-16 bg-gray-200 rounded" />
-                <div className="h-3 w-20 bg-gray-200 rounded" />
+                <div className="h-3 w-16 bg-navy-100 rounded" />
+                <div className="h-3 w-20 bg-navy-100 rounded" />
               </div>
             </div>
-            <div className="h-24 bg-gray-200 rounded" />
+            <div className="h-24 bg-navy-100 rounded" />
           </div>
         ))}
       </div>
