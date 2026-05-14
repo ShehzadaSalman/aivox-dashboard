@@ -135,6 +135,36 @@ function DashboardOverview() {
               </div>
             </div>
           </div>
+          <ChartCard
+            title="Cost Trend"
+            subtitle="Last 7 days"
+            stat={`${formatUSD(totalCostCents)} total`}
+            secondary={`${formatUSD(Math.round(totalCostCents / Math.max(chartData.length, 1)))} avg/day`}
+          >
+            <ResponsiveContainer width="100%" height={160}>
+              <AreaChart data={chartData} margin={{ top: 8, right: 12, left: -12, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="costFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#d62d20" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#d62d20" stopOpacity={0.02} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="date" tickLine={false} axisLine={false} fontSize={11} />
+                <YAxis tickLine={false} axisLine={false} fontSize={11} />
+                <Tooltip
+                  contentStyle={{ borderRadius: 10, borderColor: '#d6e0ef' }}
+                  labelStyle={{ fontWeight: 600 }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="cost"
+                  stroke="#d62d20"
+                  fill="url(#costFill)"
+                  strokeWidth={2.5}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </ChartCard>
         </div>
       )}
 
@@ -233,40 +263,6 @@ function DashboardOverview() {
         </ChartCard>
       </div>
 
-      {showCost && (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          <ChartCard
-            title="Cost Trend"
-            subtitle="Last 7 days"
-            stat={`${formatUSD(totalCostCents)} total`}
-            secondary={`${formatUSD(Math.round(totalCostCents / Math.max(chartData.length, 1)))} avg/day`}
-          >
-            <ResponsiveContainer width="100%" height={160}>
-              <AreaChart data={chartData} margin={{ top: 8, right: 12, left: -12, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="costFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#d62d20" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#d62d20" stopOpacity={0.02} />
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="date" tickLine={false} axisLine={false} fontSize={11} />
-                <YAxis tickLine={false} axisLine={false} fontSize={11} />
-                <Tooltip
-                  contentStyle={{ borderRadius: 10, borderColor: '#d6e0ef' }}
-                  labelStyle={{ fontWeight: 600 }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="cost"
-                  stroke="#d62d20"
-                  fill="url(#costFill)"
-                  strokeWidth={2.5}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </ChartCard>
-        </div>
-      )}
     </div>
   );
 }

@@ -115,7 +115,6 @@ function CallManagement() {
                       )}
                       <th className="hidden px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase md:table-cell">Date</th>
                       <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Duration</th>
-                      <th className="hidden px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase md:table-cell">Cost</th>
                       <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Actions</th>
                 </tr>
               </thead>
@@ -141,9 +140,6 @@ function CallManagement() {
                     </td>
                     <td className="px-3 py-3 text-sm text-gray-500 whitespace-nowrap md:whitespace-normal md:px-6">
                       {formatDuration(call.duration_seconds)}
-                    </td>
-                    <td className="hidden px-6 py-4 text-sm text-gray-500 whitespace-nowrap md:whitespace-normal md:table-cell">
-                      {formatUSD(call.cost)}
                     </td>
                     <td className="px-3 py-3 text-sm font-medium whitespace-nowrap md:px-6">
                       <button
@@ -255,7 +251,6 @@ function CallDetailsModal({ call, onClose }) {
               <div><span className="font-medium">Start:</span> {formatDate(call.start_timestamp)}</div>
               <div><span className="font-medium">End:</span> {formatDate(call.end_timestamp)}</div>
               <div><span className="font-medium">Duration:</span> {formatDuration(call.duration_seconds)}</div>
-              <div><span className="font-medium">Cost:</span> {formatUSD(call.cost)}</div>
               <div>
                 <span className="font-medium">Status:</span>{' '}
                 <span className={`px-2 py-1 rounded-full text-xs ${

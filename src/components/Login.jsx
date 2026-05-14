@@ -182,7 +182,7 @@ function Login() {
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { setEmail(e.target.value); setError(""); }}
                 className="input-base"
                 placeholder="Enter your email"
                 required
@@ -191,26 +191,26 @@ function Login() {
 
             {isRegistering && (
               <div>
-              <label
-                htmlFor="phone"
-                className="block mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-ink-600"
-              >
-                Phone
-              </label>
-              <PhoneInput
-                defaultCountry="us"
-                value={phone}
-                onChange={(nextPhone) => setPhone(nextPhone)}
-                className="w-full"
-                inputClassName="w-full rounded-md border border-navy-100 bg-white px-4 py-2 text-ink-900 outline-none transition focus:border-accent-600 focus:ring-2 focus:ring-accent-600/20"
-                countrySelectorStyleProps={{
-                  buttonClassName:
-                    "h-full px-3 border border-navy-100 rounded-md bg-white text-ink-900",
-                  buttonContentWrapperClassName: "gap-2",
-                }}
-                inputProps={{ id: "phone" }}
-                placeholder="Enter your phone number"
-                required
+                <label
+                  htmlFor="phone"
+                  className="block mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-ink-600"
+                >
+                  Phone
+                </label>
+                <PhoneInput
+                  defaultCountry="us"
+                  value={phone}
+                  onChange={(nextPhone) => setPhone(nextPhone)}
+                  className="w-full"
+                  inputClassName="w-full rounded-md border border-navy-100 bg-white px-4 py-2 text-ink-900 outline-none transition focus:border-accent-600 focus:ring-2 focus:ring-accent-600/20"
+                  countrySelectorStyleProps={{
+                    buttonClassName:
+                      "h-full px-3 border border-navy-100 rounded-md bg-white text-ink-900",
+                    buttonContentWrapperClassName: "gap-2",
+                  }}
+                  inputProps={{ id: "phone" }}
+                  placeholder="Enter your phone number"
+                  required
                 />
               </div>
             )}
@@ -226,7 +226,7 @@ function Login() {
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => { setPassword(e.target.value); setError(""); }}
                 className="input-base"
                 placeholder="Enter your password"
                 required

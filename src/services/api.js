@@ -56,8 +56,17 @@ const apiRequest = async (endpoint, options = {}) => {
       if (response.status === 401 || response.status === 403) {
         notifyUnauthorized();
       }
-      const error = new Error(data.message || "An error occurred");
+      let errorMessage = data.message || "An error occurred";
+      if (data.stack) {
+        const firstLine = data.stack.split("\n")[0];
+        const colonIdx = firstLine.indexOf(": ");
+        if (colonIdx !== -1) {
+          errorMessage = firstLine.substring(colonIdx + 2);
+        }
+      }
+      const error = new Error(errorMessage);
       error.status = response.status;
+      error.data = data;
       throw error;
     }
 
