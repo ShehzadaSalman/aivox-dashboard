@@ -270,10 +270,9 @@ function Login() {
 
         {verificationEmail && (
           <div className="mt-6 rounded-xl border border-navy-100 bg-navy-50/80 p-5">
-            <div className="text-sm font-semibold uppercase tracking-[0.2em] text-navy-900">Step 2: Verify your phone</div>
+            <div className="text-sm font-semibold uppercase tracking-[0.2em] text-navy-900">Step 2: Verify your email</div>
             <p className="mt-1 text-sm text-ink-600">
-              Enter the verification code below (not in the login form). We sent it to the phone on
-              your signup.
+              Enter the verification code below (not in the login form). We sent it to your email address.
             </p>
             <form onSubmit={handleVerifyPhone} className="mt-4 space-y-4">
               <div>
@@ -298,7 +297,7 @@ function Login() {
                 disabled={verificationLoading}
                 className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {verificationLoading ? "Verifying..." : "Verify Phone"}
+                {verificationLoading ? "Verifying..." : "Verify Email"}
               </button>
               <button
                 type="button"
