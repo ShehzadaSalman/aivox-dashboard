@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { authAPI, integrationAPI } from '../services/api';
+import { loginOneSignalUser, logoutOneSignalUser, requestNotificationPermission } from '../services/pushNotificationService';
 
 const AuthContext = createContext(null);
 const AUTH_TOKEN_KEY = 'authToken';
@@ -38,6 +39,10 @@ export const AuthProvider = ({ children }) => {
       setUser(response.data);
       if (typeof window !== 'undefined') {
         localStorage.setItem(AUTH_USER_KEY, JSON.stringify(response.data));
+      }
+      if (response.data?.id) {
+        await requestNotificationPermission();
+        await loginOneSignalUser(response.data.id);
       }
     } catch (error) {
       if (error?.status === 401 || error?.status === 403) {
@@ -172,7 +177,8 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    await logoutOneSignalUser();
     if (typeof window !== 'undefined') {
       localStorage.removeItem(AUTH_TOKEN_KEY);
       localStorage.removeItem(AUTH_USER_KEY);
