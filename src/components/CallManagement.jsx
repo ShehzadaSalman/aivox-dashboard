@@ -69,7 +69,7 @@ function CallManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Call Management</h1>
           <p className="mt-1 text-gray-600">View and manage all calls</p>
@@ -102,70 +102,110 @@ function CallManagement() {
         </div>
       ) : (
         <>
-              <div className="overflow-hidden bg-white rounded-lg shadow">
-                <div className="overflow-x-auto md:overflow-x-visible">
-            <table className="min-w-full table-fixed divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                      <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">From</th>
-                      <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Call ID</th>
-                      <th className="hidden px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase sm:table-cell">Agent</th>
-                      {showAgentId && (
-                        <th className="hidden px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase lg:table-cell">Agent ID</th>
-                      )}
-                      <th className="hidden px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase md:table-cell">Date</th>
-                      <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Duration</th>
-                      <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {calls.map((call) => (
-                  <tr key={call.id} className="hover:bg-gray-50">
-                    <td className="px-3 py-3 text-sm text-gray-500 truncate md:whitespace-normal md:px-6">
-                      {getCallerFrom(call.caller_info)}
-                    </td>
-                    <td className="px-3 py-3 text-sm font-medium text-gray-900 truncate md:whitespace-normal md:px-6">
-                      {call.call_id.substring(0, 20)}...
-                    </td>
-                    <td className="hidden px-6 py-4 text-sm text-gray-500 whitespace-nowrap md:whitespace-normal sm:table-cell">
-                      {call.agent?.agent_name || call.agent_id}
-                    </td>
-                    {showAgentId && (
-                      <td className="hidden px-6 py-4 text-sm text-gray-500 whitespace-nowrap md:whitespace-normal lg:table-cell">
-                        {call.agent_id}
-                      </td>
-                    )}
-                    <td className="hidden px-6 py-4 text-sm text-gray-500 whitespace-nowrap md:whitespace-normal md:table-cell">
-                      {formatDate(call.start_timestamp)}
-                    </td>
-                    <td className="px-3 py-3 text-sm text-gray-500 whitespace-nowrap md:whitespace-normal md:px-6">
-                      {formatDuration(call.duration_seconds)}
-                    </td>
-                    <td className="px-3 py-3 text-sm font-medium whitespace-nowrap md:px-6">
-                      <button
-                        onClick={() => setSelectedCall(call)}
-                        className="text-gray-900 hover:text-gray-700"
-                      >
-                        View
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* Mobile Cards */}
+          <div className="md:hidden space-y-3">
+            {calls.map((call) => (
+              <div key={call.id} className="bg-white rounded-lg shadow p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs text-gray-400 uppercase tracking-wide">From</p>
+                    <p className="font-semibold text-gray-900">{getCallerFrom(call.caller_info)}</p>
+                  </div>
+                  <span className={`shrink-0 px-2 py-1 text-xs font-semibold rounded-full ${call.call_successful ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {call.call_status}
+                  </span>
                 </div>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <p className="text-xs text-gray-400 uppercase tracking-wide">Agent</p>
+                    <p className="text-gray-700">{call.agent?.agent_name || call.agent_id}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 uppercase tracking-wide">Duration</p>
+                    <p className="text-gray-700">{formatDuration(call.duration_seconds)}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-xs text-gray-400 uppercase tracking-wide">Date</p>
+                    <p className="text-gray-700">{formatDate(call.start_timestamp)}</p>
+                  </div>
+                </div>
+                <div className="pt-2 border-t border-gray-100">
+                  <button
+                    onClick={() => setSelectedCall(call)}
+                    className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-100"
+                  >
+                    View Details
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-hidden bg-white rounded-lg shadow">
+            <div className="overflow-x-auto">
+              <table className="min-w-full table-fixed divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">From</th>
+                    <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Call ID</th>
+                    <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Agent</th>
+                    {showAgentId && (
+                      <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Agent ID</th>
+                    )}
+                    <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Date</th>
+                    <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Duration</th>
+                    <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {calls.map((call) => (
+                    <tr key={call.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
+                        {getCallerFrom(call.caller_info)}
+                      </td>
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">
+                        {call.call_id.substring(0, 20)}...
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
+                        {call.agent?.agent_name || call.agent_id}
+                      </td>
+                      {showAgentId && (
+                        <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
+                          {call.agent_id}
+                        </td>
+                      )}
+                      <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
+                        {formatDate(call.start_timestamp)}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
+                        {formatDuration(call.duration_seconds)}
+                      </td>
+                      <td className="px-6 py-4 text-sm font-medium whitespace-nowrap">
+                        <button
+                          onClick={() => setSelectedCall(call)}
+                          className="text-gray-900 hover:text-gray-700"
+                        >
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* Pagination */}
-              <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-sm text-gray-700">
-                  Showing {calls.length === 0 ? 0 : pagination.offset + 1} to{' '}
-                  {paginationMeta.total === null || paginationMeta.total === undefined
-                    ? pagination.offset + calls.length
-                    : Math.min(pagination.offset + pagination.limit, paginationMeta.total)}
-                  {paginationMeta.total === null || paginationMeta.total === undefined
-                    ? ' calls'
-                    : ` of ${paginationMeta.total} calls`}
+              Showing {calls.length === 0 ? 0 : pagination.offset + 1} to{' '}
+              {paginationMeta.total === null || paginationMeta.total === undefined
+                ? pagination.offset + calls.length
+                : Math.min(pagination.offset + pagination.limit, paginationMeta.total)}
+              {paginationMeta.total === null || paginationMeta.total === undefined
+                ? ' calls'
+                : ` of ${paginationMeta.total} calls`}
             </div>
             <div className="flex gap-2">
               <button
@@ -242,7 +282,7 @@ function CallDetailsModal({ call, onClose }) {
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div>
             <h3 className="mb-2 font-semibold text-gray-700">Call Information</h3>
             <div className="space-y-2 text-sm">

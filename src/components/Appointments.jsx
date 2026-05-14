@@ -195,123 +195,202 @@ function Appointments() {
           No bookings found.
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <>
           {deleteError && (
-            <div className="border-b border-red-100 bg-red-50 px-6 py-3 text-sm text-red-600">
+            <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
               {deleteError}
             </div>
           )}
-          <div className="max-h-[520px] overflow-y-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Attendee
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Time
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Title / Description
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Duration
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Location
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {bookingsData.map((booking) => (
-                  <tr key={booking.id || booking.uid || booking.bookingId}>
-                    <td className="px-6 py-4 text-sm text-gray-700 max-w-[180px] truncate">
-                      <div className="text-sm font-medium text-gray-900">
+
+          {/* Mobile Cards */}
+          <div className="md:hidden space-y-3">
+            {bookingsData.map((booking) => {
+              const reservationId = booking.uid;
+              const isDisabled = !reservationId || deletingId === reservationId;
+              return (
+                <div key={booking.id || booking.uid || booking.bookingId} className="bg-white rounded-lg shadow p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-gray-900 truncate">
                         {booking.attendees?.[0]?.name || "--"}
-                      </div>
-                      <div className="text-xs text-gray-500">
+                      </p>
+                      <p className="text-xs text-gray-500 truncate">
                         {booking.attendees?.[0]?.email || ""}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      {formatReadableDateTime(booking.start)}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-700 max-w-xs truncate md:whitespace-normal md:max-w-[220px] md:truncate-0">
-                      <div className="text-sm font-medium text-gray-900">
-                        {booking.title || "--"}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {booking.description || ""}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      {typeof booking.duration === "number"
-                        ? `${booking.duration} min`
-                        : booking.duration || "--"}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-700 max-w-[160px] truncate">
-                      {booking.location ? (
+                      </p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <p className="text-xs text-gray-400 uppercase tracking-wide">Time</p>
+                      <p className="text-gray-700">{formatReadableDateTime(booking.start)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 uppercase tracking-wide">Duration</p>
+                      <p className="text-gray-700">
+                        {typeof booking.duration === "number"
+                          ? `${booking.duration} min`
+                          : booking.duration || "--"}
+                      </p>
+                    </div>
+                    <div className="col-span-2">
+                      <p className="text-xs text-gray-400 uppercase tracking-wide">Title</p>
+                      <p className="text-gray-900 font-medium">{booking.title || "--"}</p>
+                      {booking.description && (
+                        <p className="text-xs text-gray-500">{booking.description}</p>
+                      )}
+                    </div>
+                    {booking.location && (
+                      <div className="col-span-2">
+                        <p className="text-xs text-gray-400 uppercase tracking-wide">Location</p>
                         <button
                           type="button"
                           title="Click to copy"
                           onClick={() => {
-                            if (
-                              typeof navigator !== "undefined" &&
-                              navigator.clipboard
-                            ) {
+                            if (typeof navigator !== "undefined" && navigator.clipboard) {
                               navigator.clipboard
                                 .writeText(booking.location)
-                                .then(() =>
-                                  showToast("Location link copied.")
-                                )
-                                .catch(() =>
-                                  showToast(
-                                    "Failed to copy location link.",
-                                    "error"
-                                  )
-                                );
+                                .then(() => showToast("Location link copied."))
+                                .catch(() => showToast("Failed to copy location link.", "error"));
                               return;
                             }
-                            showToast(
-                              "Clipboard unavailable in this browser.",
-                              "error"
-                            );
+                            showToast("Clipboard unavailable in this browser.", "error");
                           }}
-                          className="text-left text-gray-700 hover:text-gray-900 cursor-pointer"
+                          className="text-left text-gray-700 hover:text-gray-900 truncate block w-full"
                         >
                           {booking.location}
                         </button>
-                      ) : (
-                        "--"
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                      {(() => {
-                        const reservationId = booking.uid;
-                        const isDisabled = !reservationId || deletingId === reservationId;
-                        return (
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(booking)}
-                        disabled={isDisabled}
-                        className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
-                      >
-                        {deletingId === reservationId
-                          ? "Removing..."
-                          : "Remove"}
-                      </button>
-                        );
-                      })()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      </div>
+                    )}
+                  </div>
+                  <div className="pt-2 border-t border-gray-100">
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(booking)}
+                      disabled={isDisabled}
+                      className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
+                    >
+                      {deletingId === reservationId ? "Removing..." : "Remove"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        </div>
+
+          {/* Desktop Table */}
+          <div className="hidden md:block bg-white rounded-lg shadow overflow-hidden">
+            <div className="max-h-[520px] overflow-y-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Attendee
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Time
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Title / Description
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Duration
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Location
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {bookingsData.map((booking) => (
+                    <tr key={booking.id || booking.uid || booking.bookingId}>
+                      <td className="px-6 py-4 text-sm text-gray-700 max-w-[180px] truncate">
+                        <div className="text-sm font-medium text-gray-900">
+                          {booking.attendees?.[0]?.name || "--"}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {booking.attendees?.[0]?.email || ""}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {formatReadableDateTime(booking.start)}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700 max-w-xs truncate md:whitespace-normal md:max-w-[220px] md:truncate-0">
+                        <div className="text-sm font-medium text-gray-900">
+                          {booking.title || "--"}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {booking.description || ""}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {typeof booking.duration === "number"
+                          ? `${booking.duration} min`
+                          : booking.duration || "--"}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700 max-w-[160px] truncate">
+                        {booking.location ? (
+                          <button
+                            type="button"
+                            title="Click to copy"
+                            onClick={() => {
+                              if (
+                                typeof navigator !== "undefined" &&
+                                navigator.clipboard
+                              ) {
+                                navigator.clipboard
+                                  .writeText(booking.location)
+                                  .then(() =>
+                                    showToast("Location link copied.")
+                                  )
+                                  .catch(() =>
+                                    showToast(
+                                      "Failed to copy location link.",
+                                      "error"
+                                    )
+                                  );
+                                return;
+                              }
+                              showToast(
+                                "Clipboard unavailable in this browser.",
+                                "error"
+                              );
+                            }}
+                            className="text-left text-gray-700 hover:text-gray-900 cursor-pointer"
+                          >
+                            {booking.location}
+                          </button>
+                        ) : (
+                          "--"
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                        {(() => {
+                          const reservationId = booking.uid;
+                          const isDisabled = !reservationId || deletingId === reservationId;
+                          return (
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(booking)}
+                          disabled={isDisabled}
+                          className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
+                        >
+                          {deletingId === reservationId
+                            ? "Removing..."
+                            : "Remove"}
+                        </button>
+                          );
+                        })()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

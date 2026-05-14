@@ -170,7 +170,7 @@ function Dashboard() {
             />
             <div className="absolute top-0 left-0 h-full p-4 text-ink-900 shadow-xl bg-white w-72">
               <div className="flex items-center justify-between mb-4">
-                <img src="/sisteme-logo.png" alt="AI Vox Agency" className="h-10" />
+                <img src="/candibly-vertical-logo.png" alt="AI Vox Agency" className="h-10" />
                 <button
                   type="button"
                   onClick={() => setMobileOpen(false)}

@@ -275,25 +275,29 @@ function Leads() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <label className="text-sm font-medium text-gray-700">Agent</label>
-          <input
-            type="text"
-            value={agentFilter}
-            onChange={(e) => setAgentFilter(e.target.value)}
-            placeholder="Filter by agent name"
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          />
-          <label className="text-sm font-medium text-gray-700">Status</label>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="all">All</option>
-            <option value="new">New</option>
-            <option value="contacted">Contacted</option>
-            <option value="qualified">Qualified</option>
-          </select>
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700">Agent</label>
+            <input
+              type="text"
+              value={agentFilter}
+              onChange={(e) => setAgentFilter(e.target.value)}
+              placeholder="Filter by agent name"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700">Status</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">All</option>
+              <option value="new">New</option>
+              <option value="contacted">Contacted</option>
+              <option value="qualified">Qualified</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -308,9 +312,80 @@ function Leads() {
           No leads available yet.
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="overflow-x-auto md:overflow-x-visible">
-            <div className="max-h-[520px] overflow-y-auto">
+        <>
+          {/* Mobile Cards */}
+          <div className="md:hidden space-y-3">
+            {filteredLeads.map((lead) => (
+              <div key={lead.id} className="bg-white rounded-lg shadow p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-gray-900 truncate">{lead.name}</p>
+                    <p className="text-xs text-gray-500">{lead.company}</p>
+                  </div>
+                  <span className="shrink-0 px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
+                    {lead.status}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <p className="text-xs text-gray-400 uppercase tracking-wide">Email</p>
+                    <p className="text-gray-700 truncate">{lead.email || "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 uppercase tracking-wide">Phone</p>
+                    <p className="text-gray-700">{formatLeadPhone(lead.phone) || "—"}</p>
+                  </div>
+                  {lead.address && (
+                    <div className="col-span-2">
+                      <p className="text-xs text-gray-400 uppercase tracking-wide">Address</p>
+                      <p className="text-gray-700 truncate">{lead.address}</p>
+                    </div>
+                  )}
+                  {lead.reason && (
+                    <div className="col-span-2">
+                      <p className="text-xs text-gray-400 uppercase tracking-wide">Reason</p>
+                      <p className="text-gray-700">{lead.reason}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-xs text-gray-400 uppercase tracking-wide">Agent</p>
+                    <p className="text-gray-700">{lead.agentName || "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 uppercase tracking-wide">Created</p>
+                    <p className="text-gray-700">{lead.createdAt}</p>
+                  </div>
+                  {lead.visitTime && (
+                    <div className="col-span-2">
+                      <p className="text-xs text-gray-400 uppercase tracking-wide">Visit Time</p>
+                      <p className="text-gray-700">{lead.visitTime}</p>
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
+                  <button
+                    type="button"
+                    onClick={() => openAppointmentModal(lead)}
+                    className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-100"
+                  >
+                    Create Appointment
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(lead.id)}
+                    disabled={deletingId === lead.id}
+                    className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
+                  >
+                    {deletingId === lead.id ? "Deleting..." : "Delete"}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table */}
+          <div className="hidden md:block bg-white rounded-lg shadow overflow-hidden">
+            <div className="max-h-[520px] overflow-y-auto overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -403,7 +478,7 @@ function Leads() {
             </table>
           </div>
           </div>
-        </div>
+        </>
       )}
 
       {appointmentLead && (
