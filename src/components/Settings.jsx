@@ -8,6 +8,7 @@ import {
 import "react-international-phone/style.css";
 import { integrationAPI, utilityAPI } from "../services/api";
 import { DEFAULT_CAL_CONFIG, normalizeCalConfig } from "../utils/calConfig";
+import { requestNotificationPermission } from "../services/pushNotificationService";
 
 const DEFAULT_SMS_CONFIG = {
   defaultCountryCode: "+1",
@@ -251,6 +252,7 @@ function Settings() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="p-6 space-y-4 bg-white rounded-lg shadow">
           <h2 className="text-lg font-semibold text-gray-900">Notifications</h2>
+          <PushNotificationToggle />
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-800">Usage alerts</p>
@@ -359,6 +361,67 @@ function Settings() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function PushNotificationToggle() {
+  const [permission, setPermission] = useState(
+    typeof Notification !== "undefined" ? Notification.permission : "default"
+  );
+  const [requesting, setRequesting] = useState(false);
+
+  const handleEnable = async () => {
+    setRequesting(true);
+    const granted = await requestNotificationPermission();
+    setPermission(typeof Notification !== "undefined" ? Notification.permission : "default");
+    setRequesting(false);
+  };
+
+  if (permission === "granted") {
+    return (
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-800">Push notifications</p>
+          <p className="text-xs text-gray-500">Receive alerts for new leads and appointments.</p>
+        </div>
+        <span className="px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-700 text-sm font-medium">
+          Enabled
+        </span>
+      </div>
+    );
+  }
+
+  if (permission === "denied") {
+    return (
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-800">Push notifications</p>
+          <p className="text-xs text-red-500">
+            Blocked by browser. On iPhone: Settings → Safari → {window.location.hostname} → Notifications → Allow.
+          </p>
+        </div>
+        <span className="px-3 py-1.5 rounded-full bg-red-100 text-red-700 text-sm font-medium">
+          Blocked
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-sm font-medium text-gray-800">Push notifications</p>
+        <p className="text-xs text-gray-500">Receive alerts for new leads and appointments.</p>
+      </div>
+      <button
+        type="button"
+        onClick={handleEnable}
+        disabled={requesting}
+        className="px-3 py-1.5 rounded-full bg-gray-900 text-white text-sm font-medium disabled:opacity-60"
+      >
+        {requesting ? "Requesting..." : "Enable"}
+      </button>
     </div>
   );
 }

@@ -41,7 +41,6 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem(AUTH_USER_KEY, JSON.stringify(response.data));
       }
       if (response.data?.id) {
-        await requestNotificationPermission();
         await loginOneSignalUser(response.data.id);
       }
     } catch (error) {
