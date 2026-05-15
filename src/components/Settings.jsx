@@ -370,11 +370,17 @@ function PushNotificationToggle() {
     typeof Notification !== "undefined" ? Notification.permission : "default"
   );
   const [requesting, setRequesting] = useState(false);
+  const [error, setError] = useState("");
 
   const handleEnable = async () => {
     setRequesting(true);
-    const granted = await requestNotificationPermission();
-    setPermission(typeof Notification !== "undefined" ? Notification.permission : "default");
+    setError("");
+    const result = await requestNotificationPermission();
+    const current = typeof Notification !== "undefined" ? Notification.permission : "default";
+    setPermission(current);
+    if (!result && current !== "granted") {
+      setError("Could not enable notifications. Make sure you opened the app from your home screen icon, not Safari.");
+    }
     setRequesting(false);
   };
 
@@ -409,19 +415,22 @@ function PushNotificationToggle() {
   }
 
   return (
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm font-medium text-gray-800">Push notifications</p>
-        <p className="text-xs text-gray-500">Receive alerts for new leads and appointments.</p>
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-800">Push notifications</p>
+          <p className="text-xs text-gray-500">Receive alerts for new leads and appointments.</p>
+        </div>
+        <button
+          type="button"
+          onClick={handleEnable}
+          disabled={requesting}
+          className="px-3 py-1.5 rounded-full bg-gray-900 text-white text-sm font-medium disabled:opacity-60"
+        >
+          {requesting ? "Requesting..." : "Enable"}
+        </button>
       </div>
-      <button
-        type="button"
-        onClick={handleEnable}
-        disabled={requesting}
-        className="px-3 py-1.5 rounded-full bg-gray-900 text-white text-sm font-medium disabled:opacity-60"
-      >
-        {requesting ? "Requesting..." : "Enable"}
-      </button>
+      {error && <p className="text-xs text-red-500">{error}</p>}
     </div>
   );
 }

@@ -42,7 +42,13 @@ export const logoutOneSignalUser = async () => {
 };
 
 export const requestNotificationPermission = async () => {
-  if (!initialized) return false;
+  if (!initialized) {
+    await initOneSignal();
+  }
+  if (!initialized) {
+    console.warn("OneSignal not initialized — cannot request permission");
+    return false;
+  }
   try {
     await OneSignal.Notifications.requestPermission();
     return OneSignal.Notifications.permission;
