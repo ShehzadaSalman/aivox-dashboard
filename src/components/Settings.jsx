@@ -378,8 +378,8 @@ function PushNotificationToggle() {
     const result = await requestNotificationPermission();
     const current = typeof Notification !== "undefined" ? Notification.permission : "default";
     setPermission(current);
-    if (!result && current !== "granted") {
-      setError("Could not enable notifications. Make sure you opened the app from your home screen icon, not Safari.");
+    if (!result.ok && current !== "granted") {
+      setError(result.error || "Could not enable notifications.");
     }
     setRequesting(false);
   };

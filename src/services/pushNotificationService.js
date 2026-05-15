@@ -1,13 +1,15 @@
 import OneSignal from "react-onesignal";
 
 let initialized = false;
+let initError = null;
 
 export const initOneSignal = async () => {
   if (initialized) return;
 
   const appId = import.meta.env.VITE_ONESIGNAL_APP_ID;
   if (!appId) {
-    console.warn("OneSignal App ID not configured");
+    initError = "OneSignal App ID not configured";
+    console.warn(initError);
     return;
   }
 
@@ -18,10 +20,14 @@ export const initOneSignal = async () => {
       notifyButton: { enable: false },
     });
     initialized = true;
+    initError = null;
   } catch (error) {
+    initError = error?.message || "OneSignal init failed";
     console.error("OneSignal init failed:", error);
   }
 };
+
+export const getInitError = () => initError;
 
 export const loginOneSignalUser = async (userId) => {
   if (!initialized || !userId) return;
@@ -46,14 +52,15 @@ export const requestNotificationPermission = async () => {
     await initOneSignal();
   }
   if (!initialized) {
-    console.warn("OneSignal not initialized — cannot request permission");
-    return false;
+    const reason = initError || "OneSignal failed to initialize";
+    console.warn("OneSignal not initialized —", reason);
+    return { ok: false, error: reason };
   }
   try {
     await OneSignal.Notifications.requestPermission();
-    return OneSignal.Notifications.permission;
+    return { ok: OneSignal.Notifications.permission === true, error: null };
   } catch (error) {
     console.error("OneSignal permission request failed:", error);
-    return false;
+    return { ok: false, error: error?.message || "Permission request failed" };
   }
 };
