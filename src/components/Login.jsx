@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { PhoneInput } from "react-international-phone";
 import "react-international-phone/style.css";
+import PendingApproval from "./PendingApproval";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -16,6 +17,7 @@ function Login() {
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [pendingApproval, setPendingApproval] = useState(false);
   const {
     login,
     register,
@@ -67,6 +69,9 @@ function Login() {
         } else {
           navigate("/dashboard");
         }
+      } else if (result.pending) {
+        // Approved-status check failed: account exists but awaits approval.
+        setPendingApproval(true);
       } else {
         setError(result.error || "Authentication failed");
       }
@@ -94,7 +99,9 @@ function Login() {
       }
       const result = await verifyPhone(verificationEmail, verificationCode);
       if (result.success) {
-        setNotice("Phone number verified successfully.");
+        setNotice(
+          "Email verified! Your account is pending approval — we'll email you as soon as it's active."
+        );
         setVerificationCode("");
         setVerificationEmail("");
       } else {
@@ -126,6 +133,20 @@ function Login() {
   };
 
 
+  if (pendingApproval) {
+    return (
+      <PendingApproval
+        email={verificationEmail || email}
+        onBack={() => {
+          setPendingApproval(false);
+          setError("");
+          setNotice("");
+          setPassword("");
+        }}
+      />
+    );
+  }
+
   return (
     <div className="relative flex items-center justify-center min-h-screen px-4 py-12 overflow-hidden bg-surface-50">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(13,31,53,0.08),_transparent_55%),radial-gradient(circle_at_bottom,_rgba(214,45,32,0.1),_transparent_50%),radial-gradient(circle_at_left,_rgba(240,165,0,0.08),_transparent_45%)]" />
@@ -151,6 +172,11 @@ function Login() {
 
         {!verificationEmail && (
           <form onSubmit={handleSubmit} className="space-y-6">
+            {isRegistering && (
+              <div className="text-xs font-semibold uppercase tracking-[0.3em] text-gold-600">
+                Step 1 of 2
+              </div>
+            )}
             {isRegistering && (
               <div>
                 <label
@@ -270,9 +296,14 @@ function Login() {
 
         {verificationEmail && (
           <div className="mt-6 rounded-xl border border-navy-100 bg-navy-50/80 p-5">
-            <div className="text-sm font-semibold uppercase tracking-[0.2em] text-navy-900">Step 2: Verify your email</div>
+            <div className="text-xs font-semibold uppercase tracking-[0.3em] text-gold-600">
+              Step 2 of 2
+            </div>
+            <div className="mt-1 text-sm font-semibold uppercase tracking-[0.2em] text-navy-900">
+              Verify your email
+            </div>
             <p className="mt-1 text-sm text-ink-600">
-              Enter the verification code below (not in the login form). We sent it to your email address.
+              We emailed a 6-digit code to <span className="font-semibold text-navy-900">{verificationEmail}</span>. Enter it below to confirm your address.
             </p>
             <form onSubmit={handleVerifyPhone} className="mt-4 space-y-4">
               <div>

@@ -98,7 +98,8 @@ export const AuthProvider = ({ children }) => {
       }
       return { success: false, error: 'Login failed' };
     } catch (error) {
-      return { success: false, error: error.message };
+      const pending = /pending approval/i.test(error.message || '');
+      return { success: false, pending, error: error.message };
     }
   };
 
@@ -122,6 +123,31 @@ export const AuthProvider = ({ children }) => {
         };
       }
       return { success: false, error: 'Registration failed' };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  };
+
+  const updateProfile = async (data) => {
+    try {
+      const response = await authAPI.updateProfile(data);
+      if (response.success && response.data) {
+        setUser(response.data);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(AUTH_USER_KEY, JSON.stringify(response.data));
+        }
+        return { success: true };
+      }
+      return { success: false, error: 'Update failed' };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  };
+
+  const changePassword = async (currentPassword, newPassword) => {
+    try {
+      await authAPI.changePassword(currentPassword, newPassword);
+      return { success: true };
     } catch (error) {
       return { success: false, error: error.message };
     }
@@ -210,6 +236,8 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     register,
+    updateProfile,
+    changePassword,
     startPhoneVerification,
     verifyPhone,
     startPasswordResetEmail,

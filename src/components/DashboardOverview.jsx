@@ -10,12 +10,35 @@ import {
   Bar,
   CartesianGrid,
 } from 'recharts';
-import { analyticsAPI, utilityAPI } from '../services/api';
+import { useState } from 'react';
+import {
+  ClipboardList,
+  CalendarCheck,
+  Target,
+  Wallet,
+  PhoneCall,
+} from 'lucide-react';
+import { analyticsAPI, utilityAPI, leadAPI, calcomAPI, integrationAPI } from '../services/api';
 import { formatUSD } from '../services/currency';
 import { useAuth } from '../contexts/AuthContext';
+import OnboardingChecklist from './OnboardingChecklist';
+
+const ONBOARDING_DISMISSED_KEY = 'candibly:onboarding-dismissed';
 
 function DashboardOverview() {
   const { isAdmin } = useAuth();
+  const [onboardingDismissed, setOnboardingDismissed] = useState(
+    () => typeof window !== 'undefined' &&
+      window.localStorage.getItem(ONBOARDING_DISMISSED_KEY) === '1'
+  );
+  const { data: calIntegration } = useQuery({
+    queryKey: ['integrations', 'calcom', 'status'],
+    queryFn: async () => {
+      const response = await integrationAPI.get('calcom');
+      return response?.data || null;
+    },
+    retry: false,
+  });
   const {
     data: overviewData,
     isLoading: overviewLoading,
@@ -38,6 +61,33 @@ function DashboardOverview() {
       return response.data;
     },
   });
+  const { data: leadsCount } = useQuery({
+    queryKey: ['leads-count'],
+    queryFn: async () => {
+      const response = await leadAPI.list({ includeCount: true, limit: 1 });
+      return response?.data?.pagination?.total ?? 0;
+    },
+  });
+  const { data: appointmentsCount } = useQuery({
+    queryKey: ['appointments-count'],
+    queryFn: async () => {
+      const response = await calcomAPI.listBookings({ take: 100 });
+      const list = Array.isArray(response?.data)
+        ? response.data
+        : Array.isArray(response)
+          ? response
+          : response?.bookings || [];
+      return list.filter(
+        (booking) => (booking.status || '').toLowerCase() === 'accepted'
+      ).length;
+    },
+    retry: false,
+  });
+  const totalLeads = leadsCount ?? 0;
+  const totalAppointments = appointmentsCount ?? 0;
+  const conversionRate = totalLeads
+    ? Math.min((totalAppointments / totalLeads) * 100, 100)
+    : 0;
   const stats = overviewData?.stats || null;
   const analytics = overviewData?.analytics || null;
   const loading = overviewLoading || callsLoading;
@@ -56,6 +106,35 @@ function DashboardOverview() {
     cost: entry.totalCost ?? 0,
   }));
   const statusSegments = buildStatusSegments(analytics?.callsByStatus);
+
+  const onboardingSteps = [
+    {
+      label: 'Your voice agent is ready',
+      done: (stats?.agents?.total || 0) > 0,
+      hint: 'Our team connects your agent — you\'ll see it here once it\'s live.',
+    },
+    {
+      label: 'Connect your calendar',
+      done: Boolean(calIntegration?.hasApiKey),
+      hint: 'Let callers book straight into your calendar.',
+      to: '/dashboard/profile',
+      cta: 'Connect',
+    },
+    {
+      label: 'Receive your first call',
+      done: totalCalls > 0,
+      hint: 'Share your number or make a test call to see it appear here.',
+    },
+  ];
+  const onboardingComplete = onboardingSteps.every((step) => step.done);
+  const showOnboarding = !onboardingComplete && !onboardingDismissed;
+
+  const dismissOnboarding = () => {
+    setOnboardingDismissed(true);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(ONBOARDING_DISMISSED_KEY, '1');
+    }
+  };
 
   if (loading) {
     return <DashboardSkeleton />;
@@ -78,38 +157,53 @@ function DashboardOverview() {
         </div>
       </div>
 
+      {showOnboarding && (
+        <OnboardingChecklist
+          steps={onboardingSteps}
+          onDismiss={dismissOnboarding}
+        />
+      )}
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
-          title="Total Agents"
-          value={stats?.agents?.total || 0}
-          subtitle={`${stats?.agents?.active || 0} active`}
-          icon="👥"
+          title="Leads Captured"
+          value={totalLeads}
+          subtitle="From AI-answered calls"
+          Icon={ClipboardList}
           color="blue"
         />
         <StatCard
-          title="Total Calls"
-          value={stats?.calls?.total || 0}
-          subtitle={`${analytics?.successfulCalls || 0} successful`}
-          icon="📞"
+          title="Appointments Booked"
+          value={totalAppointments}
+          subtitle="Upcoming, accepted"
+          Icon={CalendarCheck}
           color="green"
         />
-        {showCost && (
+        <StatCard
+          title="Lead → Appointment"
+          value={`${conversionRate.toFixed(0)}%`}
+          subtitle={`${totalAppointments} of ${totalLeads} leads booked`}
+          Icon={Target}
+          color="indigo"
+        />
+        {showCost ? (
           <StatCard
             title="Total Cost"
             value={formatUSD(totalCostCents)}
             subtitle={`Avg: ${formatUSD(avgCostCents)}`}
-            icon="💰"
+            Icon={Wallet}
+            color="purple"
+          />
+        ) : (
+          <StatCard
+            title="Total Calls"
+            value={stats?.calls?.total || 0}
+            subtitle={`${analytics?.successfulCalls || 0} successful`}
+            Icon={PhoneCall}
             color="purple"
           />
         )}
-        <StatCard
-          title="Success Rate"
-          value={`${(analytics?.successRate || 0).toFixed(1)}%`}
-          subtitle={`${analytics?.totalCalls || 0} total calls`}
-          icon="✅"
-          color="indigo"
-        />
       </div>
 
       {/* Analytics Section */}
@@ -267,19 +361,27 @@ function DashboardOverview() {
   );
 }
 
-function StatCard({ title, value, subtitle, icon, color }) {
+function StatCard({ title, value, subtitle, Icon, color }) {
   const colorClasses = {
     blue: 'border-l-4 border-accent-600',
     green: 'border-l-4 border-gold-500',
     purple: 'border-l-4 border-navy-700',
     indigo: 'border-l-4 border-accent-700',
   };
+  const iconTint = {
+    blue: 'bg-accent-600/10 text-accent-700',
+    green: 'bg-gold-500/15 text-gold-600',
+    purple: 'bg-navy-700/10 text-navy-700',
+    indigo: 'bg-accent-700/10 text-accent-700',
+  };
 
   return (
     <div className={`card-surface rounded-lg p-6 ${colorClasses[color]}`}>
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-600">{title}</h3>
-        <span className="text-2xl">{icon}</span>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-500">{title}</h3>
+        <span className={`flex h-9 w-9 items-center justify-center rounded-full ${iconTint[color]}`}>
+          {Icon && <Icon size={18} strokeWidth={1.75} />}
+        </span>
       </div>
       <div className="text-3xl font-semibold text-ink-900 mb-1">{value}</div>
       <div className="text-sm text-ink-500">{subtitle}</div>

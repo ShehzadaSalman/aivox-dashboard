@@ -97,6 +97,20 @@ export const authAPI = {
     return apiRequest("/api/auth/me");
   },
 
+  updateProfile: async (data) => {
+    return apiRequest("/api/auth/me", {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  },
+
+  changePassword: async (currentPassword, newPassword) => {
+    return apiRequest("/api/auth/password/change", {
+      method: "POST",
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+  },
+
   startPhoneVerification: async (email, phone = null) => {
     const payload = { email, ...(phone ? { phone } : {}) };
     return apiRequest("/api/auth/phone/start", {
@@ -164,6 +178,46 @@ export const agentAPI = {
       method: "DELETE",
     });
   },
+
+  sync: async () => {
+    return apiRequest("/api/dashboard/sync-agents", { method: "POST" });
+  },
+
+  getConfig: async (agentId) => {
+    return apiRequest(`/api/dashboard/agents/${agentId}/config`);
+  },
+
+  updateConfig: async (agentId, payload) => {
+    return apiRequest(`/api/dashboard/agents/${agentId}/config`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  getKnowledgeBase: async (agentId) => {
+    return apiRequest(`/api/dashboard/agents/${agentId}/knowledge-base`);
+  },
+
+  createKnowledgeBase: async (agentId, payload) => {
+    return apiRequest(`/api/dashboard/agents/${agentId}/knowledge-base`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  addKnowledgeBaseSources: async (agentId, payload) => {
+    return apiRequest(`/api/dashboard/agents/${agentId}/knowledge-base/sources`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  deleteKnowledgeBaseSource: async (agentId, sourceId) => {
+    return apiRequest(
+      `/api/dashboard/agents/${agentId}/knowledge-base/sources/${sourceId}`,
+      { method: "DELETE" }
+    );
+  },
 };
 
 // Call Management APIs
@@ -200,6 +254,12 @@ export const leadAPI = {
     const suffix = queryString ? `?${queryString}` : "";
     return apiRequest(`/api/dashboard/leads${suffix}`);
   },
+  updateStatus: async (leadId, status) => {
+    return apiRequest(`/api/dashboard/leads/${leadId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    });
+  },
   delete: async (leadId) => {
     return apiRequest(`/api/dashboard/leads/${leadId}`, {
       method: "DELETE",
@@ -232,6 +292,14 @@ export const analyticsAPI = {
 
 // Cal.com APIs
 export const calcomAPI = {
+  testConnection: async () => {
+    return apiRequest("/api/test-calcom");
+  },
+  getAvailableSlots: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const suffix = queryString ? `?${queryString}` : "";
+    return apiRequest(`/api/slots/available${suffix}`);
+  },
   reserveSlot: async (payload) => {
     return apiRequest("/api/slots/reserve", {
       method: "POST",

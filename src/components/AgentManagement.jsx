@@ -1,28 +1,45 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { agentAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
 function AgentManagement() {
-  const { isSuperAdmin } = useAuth();
+  const { isSuperAdmin, isAdmin } = useAuth();
   const [pagination, setPagination] = useState({ limit: 20, offset: 0 });
-  const [filters, setFilters] = useState({ search: '' });
-  const [showModal, setShowModal] = useState(false);
-  const [editingAgent, setEditingAgent] = useState(null);
+  const [search, setSearch] = useState('');
+  const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState('');
   const queryClient = useQueryClient();
+
+  const handleSync = async () => {
+    setSyncing(true);
+    setSyncMessage('');
+    try {
+      const result = await agentAPI.sync();
+      setSyncMessage(
+        `Synced ${result.agentsSynced ?? 0} new, updated ${result.agentsUpdated ?? 0}.`
+      );
+      await queryClient.invalidateQueries({ queryKey: ['agents'] });
+    } catch (err) {
+      setSyncMessage(err.message || 'Sync failed.');
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const {
     data: agentsData,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ['agents', filters.search, pagination.offset, pagination.limit],
+    queryKey: ['agents', search, pagination.offset, pagination.limit],
     queryFn: async () => {
       const params = {
         limit: pagination.limit,
         offset: pagination.offset,
         includeCount: false,
-        ...(filters.search && { search: filters.search }),
+        ...(search && { search }),
       };
       const response = await agentAPI.list(params);
       return response.data;
@@ -37,131 +54,146 @@ function AgentManagement() {
     offset: pagination.offset,
     hasMore: false,
   };
-
+  const superAdmin = isSuperAdmin();
 
   const handleDelete = async (agentId) => {
-    if (!window.confirm('Are you sure you want to deactivate this agent?')) {
+    if (!window.confirm('Deactivate this agent?')) {
       return;
     }
     try {
       await agentAPI.delete(agentId);
       await queryClient.invalidateQueries({ queryKey: ['agents'] });
     } catch (err) {
-      alert(`Failed to delete agent: ${err.message}`);
+      window.alert(`Failed to deactivate agent: ${err.message}`);
     }
   };
 
-  const handleEdit = (agent) => {
-    setEditingAgent(agent);
-    setShowModal(true);
-  };
-
-  const handleCreate = () => {
-    setEditingAgent(null);
-    setShowModal(true);
-  };
-
-  const superAdmin = isSuperAdmin();
-
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Agent Management</h1>
-          <p className="text-gray-600 mt-1">Manage your AI voice agents</p>
+          <h1 className="text-3xl font-semibold text-navy-900">Agents</h1>
+          <p className="text-ink-600 mt-1">Your AI voice agents and their status.</p>
         </div>
-        <div className="flex gap-3">
-        </div>
+        {isAdmin() && (
+          <div className="flex items-center gap-3">
+            {syncMessage && <span className="text-sm text-ink-500">{syncMessage}</span>}
+            <button
+              onClick={handleSync}
+              disabled={syncing}
+              className="rounded-lg border border-navy-200 px-4 py-2 text-sm font-semibold text-ink-700 hover:bg-navy-50 disabled:opacity-50"
+            >
+              {syncing ? 'Syncing…' : 'Sync now'}
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Search
-        </label>
-        <input
-          type="text"
-          value={filters.search}
-          onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-          placeholder="Search by name or ID..."
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
+      {/* Search — only meaningful once agents exist (or a search is active) */}
+      {(agents.length > 0 || search.trim()) && (
+        <div className="card-surface rounded-lg p-4">
+          <label className="block text-xs font-semibold uppercase tracking-wide text-ink-500 mb-1.5">
+            Search
+          </label>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPagination((prev) => ({ ...prev, offset: 0 }));
+            }}
+            placeholder="Search by name..."
+            className="w-full rounded-lg border border-navy-200 px-4 py-2 text-sm focus:border-accent-600 focus:outline-none focus:ring-2 focus:ring-accent-600/20"
+          />
+        </div>
+      )}
 
-      {/* Agents Cards */}
       {isLoading && agents.length === 0 ? (
         <AgentsSkeleton />
       ) : error ? (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-600">Error: {error.message || 'Failed to load agents.'}</p>
+        <div className="card-surface rounded-lg p-4">
+          <p className="text-accent-700">Error: {error.message || 'Failed to load agents.'}</p>
         </div>
+      ) : agents.length === 0 ? (
+        <AgentsEmptyState
+          isAdmin={isAdmin()}
+          hasSearch={Boolean(search.trim())}
+          search={search}
+          onSync={handleSync}
+          syncing={syncing}
+        />
       ) : (
         <>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {agents.map((agent) => (
-              <div
-                key={agent.id}
-                className="relative bg-white rounded-2xl border border-gray-100 p-5 flex items-center justify-between gap-4 hover:border-gray-200 hover:shadow-sm transition"
-              >
-                <span className="absolute left-0 top-0 h-full w-1.5 rounded-l-2xl bg-gradient-to-b from-amber-400 via-rose-400 to-fuchsia-500" />
-                <div className="flex items-center gap-4">
-                  <div className="h-14 w-14 rounded-full bg-gradient-to-br from-amber-50 to-rose-100 border border-amber-200 flex items-center justify-center text-amber-700 text-base font-semibold">
-                    {(agent.agent_name || 'A').slice(0, 1).toUpperCase()}
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">{agent.agent_name}</h3>
-                    {superAdmin && (
-                      <p className="text-[11px] text-gray-500 mt-1">{agent.agent_id}</p>
-                    )}
-                    <div className="mt-2">
+            {agents.map((agent) => {
+              const isActive = agent.status === 'ACTIVE';
+              return (
+                <div
+                  key={agent.id}
+                  className="card-surface rounded-xl p-5 flex items-center justify-between gap-4"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 rounded-full bg-accent-600/10 border border-accent-600/20 flex items-center justify-center text-accent-700 font-semibold">
+                      {(agent.agent_name || 'A').slice(0, 1).toUpperCase()}
+                    </div>
+                    <div>
+                      <h3 className="text-base font-semibold text-navy-900">
+                        {agent.agent_name}
+                      </h3>
+                      {superAdmin && (
+                        <p className="text-[11px] text-ink-400 mt-0.5">{agent.agent_id}</p>
+                      )}
                       <span
-                        className={`inline-flex items-center gap-2 text-xs font-medium ${
-                          agent.status === 'ACTIVE' ? 'text-emerald-700' : 'text-rose-700'
+                        className={`mt-1.5 inline-flex items-center gap-1.5 text-xs font-medium ${
+                          isActive ? 'text-emerald-700' : 'text-accent-700'
                         }`}
                       >
                         <span
-                          className={`h-2 w-2 rounded-full ${
-                            agent.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-rose-500'
+                          className={`h-1.5 w-1.5 rounded-full ${
+                            isActive ? 'bg-emerald-500' : 'bg-accent-600'
                           }`}
                         />
-                        {agent.status === 'ACTIVE' ? 'Active' : 'Inactive'}
+                        {isActive ? 'Active' : 'Inactive'}
                       </span>
                     </div>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-2">
-                  {superAdmin && (
-                    <button
-                      onClick={() => handleDelete(agent.agent_id)}
-                      className="px-3 py-1.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-full hover:bg-gray-50"
+                  <div className="flex items-center gap-2">
+                    <Link
+                      to={`/dashboard/agents/${agent.agent_id}`}
+                      className="rounded-lg bg-accent-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-accent-700"
                     >
-                      Delete
-                    </button>
-                  )}
+                      Configure
+                    </Link>
+                    {superAdmin && (
+                      <button
+                        onClick={() => handleDelete(agent.agent_id)}
+                        className="rounded-lg border border-navy-200 px-3 py-1.5 text-sm font-medium text-ink-700 hover:bg-navy-50"
+                      >
+                        Deactivate
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Pagination */}
           <div className="flex justify-between items-center">
-            <div className="text-sm text-gray-700">
-              Showing {agents.length === 0 ? 0 : pagination.offset + 1} to{' '}
-              {paginationMeta.total === null || paginationMeta.total === undefined
-                ? pagination.offset + agents.length
-                : Math.min(pagination.offset + pagination.limit, paginationMeta.total)}
-              {paginationMeta.total === null || paginationMeta.total === undefined
-                ? ' agents'
-                : ` of ${paginationMeta.total} agents`}
+            <div className="text-sm text-ink-600">
+              Showing {pagination.offset + 1} to {pagination.offset + agents.length}
             </div>
             <div className="flex gap-2">
               <button
                 onClick={() =>
-                  setPagination({ ...pagination, offset: Math.max(0, pagination.offset - pagination.limit) })
+                  setPagination({
+                    ...pagination,
+                    offset: Math.max(0, pagination.offset - pagination.limit),
+                  })
                 }
                 disabled={pagination.offset === 0}
-                className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50"
+                className="rounded-lg border border-navy-200 px-4 py-2 text-sm font-semibold text-ink-700 hover:bg-navy-50 disabled:opacity-50"
               >
                 Previous
               </button>
@@ -170,7 +202,7 @@ function AgentManagement() {
                   setPagination({ ...pagination, offset: pagination.offset + pagination.limit })
                 }
                 disabled={!paginationMeta.hasMore}
-                className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50"
+                className="rounded-lg border border-navy-200 px-4 py-2 text-sm font-semibold text-ink-700 hover:bg-navy-50 disabled:opacity-50"
               >
                 Next
               </button>
@@ -178,124 +210,85 @@ function AgentManagement() {
           </div>
         </>
       )}
-
-      {/* Create/Edit Modal */}
-      {showModal && (
-        <AgentModal
-          agent={editingAgent}
-          onClose={() => {
-            setShowModal(false);
-            setEditingAgent(null);
-          }}
-          onSave={async () => {
-            await fetchAgents();
-            setShowModal(false);
-            setEditingAgent(null);
-          }}
-        />
-      )}
     </div>
   );
 }
 
-function AgentModal({ agent, onClose, onSave }) {
-  const [formData, setFormData] = useState({
-    agent_id: agent?.agent_id || '',
-    agent_name: agent?.agent_name || '',
-    status: agent?.status || 'ACTIVE',
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    try {
-      if (agent) {
-        await agentAPI.update(agent.agent_id, {
-          agent_name: formData.agent_name,
-          status: formData.status,
-        });
-      } else {
-        await agentAPI.create(formData);
-      }
-      onSave();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <h2 className="text-2xl font-bold mb-4">
-          {agent ? 'Edit Agent' : 'Create Agent'}
-        </h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {!agent && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Agent ID *
-              </label>
-              <input
-                type="text"
-                value={formData.agent_id}
-                onChange={(e) => setFormData({ ...formData, agent_id: e.target.value })}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          )}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Agent Name *
-            </label>
-            <input
-              type="text"
-              value={formData.agent_name}
-              onChange={(e) => setFormData({ ...formData, agent_name: e.target.value })}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Status
-            </label>
-            <select
-              value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="ACTIVE">Active</option>
-              <option value="INACTIVE">Inactive</option>
-            </select>
-          </div>
-          {error && (
-            <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg">{error}</div>
-          )}
-          <div className="flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50"
-            >
-              {loading ? 'Saving...' : 'Save'}
-            </button>
-          </div>
-        </form>
+function AgentsEmptyState({ isAdmin, hasSearch, search, onSync, syncing }) {
+  // No results for an active search — same for every role.
+  if (hasSearch) {
+    return (
+      <div className="card-surface rounded-2xl p-10 text-center">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-navy-50 text-3xl">
+          🔍
+        </div>
+        <h2 className="text-lg font-semibold text-navy-900">No agents match your search</h2>
+        <p className="mt-1 text-ink-500">
+          Nothing found for “{search.trim()}”. Try a different name.
+        </p>
       </div>
+    );
+  }
+
+  // Admins provision agents by syncing from Retell.
+  if (isAdmin) {
+    return (
+      <div className="card-surface rounded-2xl p-10 text-center">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-navy-50 text-3xl">
+          👥
+        </div>
+        <h2 className="text-lg font-semibold text-navy-900">No agents yet</h2>
+        <p className="mt-1 text-ink-600">
+          Pull your voice agents in from Retell to get started.
+        </p>
+        <button
+          type="button"
+          onClick={onSync}
+          disabled={syncing}
+          className="mt-5 rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white hover:bg-accent-700 disabled:opacity-50"
+        >
+          {syncing ? 'Syncing…' : 'Sync agents from Retell'}
+        </button>
+      </div>
+    );
+  }
+
+  // End client: their agent is provisioned for them — reassure and redirect energy.
+  return (
+    <div className="card-surface rounded-2xl p-10 text-center max-w-xl mx-auto">
+      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gold-500/15 text-3xl">
+        🛠️
+      </div>
+      <h2 className="text-xl font-semibold text-navy-900">
+        Your AI agent is being set up
+      </h2>
+      <p className="mt-2 text-ink-600">
+        Our team is configuring your voice agent and connecting your phone line.
+        You'll get an email the moment it's ready to start answering calls.
+      </p>
+      <div className="mt-6 rounded-xl border border-navy-100 bg-navy-50/70 p-4 text-left">
+        <p className="text-sm font-semibold text-navy-900">While you wait</p>
+        <p className="mt-1 text-sm text-ink-600">
+          Connect your calendar so your agent can book appointments the moment it
+          goes live.
+        </p>
+        <Link
+          to="/dashboard/profile"
+          className="mt-3 inline-flex rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white hover:bg-accent-700"
+        >
+          Connect your calendar
+        </Link>
+      </div>
+      <p className="mt-5 text-sm text-ink-500">
+        Questions? Email{' '}
+        <a
+          href="mailto:support@candibly.com"
+          className="font-semibold text-navy-900 underline decoration-accent-600/40 hover:text-accent-600"
+        >
+          support@candibly.com
+        </a>
+        .
+      </p>
     </div>
   );
 }
@@ -304,19 +297,15 @@ function AgentsSkeleton() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-pulse">
       {Array.from({ length: 6 }).map((_, index) => (
-        <div key={index} className="relative bg-white rounded-2xl border border-gray-100 p-5 flex items-center justify-between gap-4">
-          <div className="absolute left-0 top-0 h-full w-1.5 rounded-l-2xl bg-gray-200" />
-          <div className="flex items-center gap-4">
-            <div className="h-14 w-14 bg-gray-200 rounded-full" />
-            <div className="space-y-2">
-              <div className="h-4 w-32 bg-gray-200 rounded" />
-              <div className="h-3 w-24 bg-gray-200 rounded" />
-              <div className="h-3 w-16 bg-gray-200 rounded" />
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="h-4 w-12 bg-gray-200 rounded" />
-            <div className="h-4 w-14 bg-gray-200 rounded" />
+        <div
+          key={index}
+          className="card-surface rounded-xl p-5 flex items-center gap-4"
+        >
+          <div className="h-12 w-12 bg-navy-100 rounded-full" />
+          <div className="space-y-2">
+            <div className="h-4 w-32 bg-navy-100 rounded" />
+            <div className="h-3 w-24 bg-navy-100 rounded" />
+            <div className="h-3 w-16 bg-navy-100 rounded" />
           </div>
         </div>
       ))}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import {
   CountrySelectorDropdown,
   FlagImage,
@@ -7,8 +7,10 @@ import {
 } from "react-international-phone";
 import "react-international-phone/style.css";
 import { integrationAPI, utilityAPI } from "../services/api";
-import { DEFAULT_CAL_CONFIG, normalizeCalConfig } from "../utils/calConfig";
 import { requestNotificationPermission } from "../services/pushNotificationService";
+import { useAuth } from "../contexts/AuthContext";
+
+const IntegrationSection = lazy(() => import("./ProfileIntegrations"));
 
 const DEFAULT_SMS_CONFIG = {
   defaultCountryCode: "+1",
@@ -42,17 +44,26 @@ const findCountryByIso2 = (iso2) => {
 };
 
 function Settings() {
+  const { isSuperAdmin } = useAuth();
   const [planUsage, setPlanUsage] = useState(null);
   const [planLoading, setPlanLoading] = useState(true);
   const [planError, setPlanError] = useState("");
-  const [calConfig, setCalConfig] = useState(DEFAULT_CAL_CONFIG);
-  const [calSaving, setCalSaving] = useState(false);
-  const [calError, setCalError] = useState("");
   const [smsConfig, setSmsConfig] = useState(DEFAULT_SMS_CONFIG);
   const [smsSaving, setSmsSaving] = useState(false);
   const [smsError, setSmsError] = useState("");
   const [smsCountryIso2, setSmsCountryIso2] = useState("us");
   const [smsCountryOpen, setSmsCountryOpen] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  useEffect(() => {
+    if (!toast) {
+      return undefined;
+    }
+    const t = setTimeout(() => setToast(null), 3000);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  const showToast = (message, variant = "success") => setToast({ message, variant });
 
   useEffect(() => {
     let isMounted = true;
@@ -75,30 +86,6 @@ function Settings() {
       }
     };
     loadPlanUsage();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    let isMounted = true;
-    const loadIntegration = async () => {
-      setCalError("");
-      try {
-        const response = await integrationAPI.get("calcom");
-        if (!isMounted) {
-          return;
-        }
-        const integration = response?.data || null;
-        setCalConfig(normalizeCalConfig(integration?.config));
-      } catch (error) {
-        if (isMounted) {
-          setCalError(error.message || "Failed to load Cal.com settings.");
-          setCalConfig(DEFAULT_CAL_CONFIG);
-        }
-      }
-    };
-    loadIntegration();
     return () => {
       isMounted = false;
     };
@@ -137,26 +124,6 @@ function Settings() {
     };
   }, []);
 
-  const handleToggleAutoCreate = async () => {
-    const nextValue = !calConfig.autoCreateAppointments;
-    setCalConfig((prev) => ({ ...prev, autoCreateAppointments: nextValue }));
-    setCalSaving(true);
-    setCalError("");
-    try {
-      await integrationAPI.update("calcom", {
-        config: { autoCreateAppointments: nextValue },
-      });
-    } catch (error) {
-      setCalConfig((prev) => ({
-        ...prev,
-        autoCreateAppointments: !nextValue,
-      }));
-      setCalError(error.message || "Failed to update Cal.com settings.");
-    } finally {
-      setCalSaving(false);
-    }
-  };
-
   const handleSmsSave = async () => {
     const nextCode = smsConfig.defaultCountryCode.trim();
     if (!/^\+\d{1,4}$/.test(nextCode)) {
@@ -169,6 +136,7 @@ function Settings() {
       await integrationAPI.update("sms", {
         config: { defaultCountryCode: nextCode },
       });
+      showToast("Default country code saved.");
     } catch (error) {
       setSmsError(error.message || "Failed to update SMS settings.");
     } finally {
@@ -192,129 +160,128 @@ function Settings() {
 
   return (
     <div className="space-y-6">
+      {toast && (
+        <div className="fixed top-4 right-4 z-50">
+          <div
+            className={`rounded-lg px-4 py-3 shadow-lg text-sm font-medium ${
+              toast.variant === "success"
+                ? "bg-emerald-600 text-white"
+                : "bg-rose-600 text-white"
+            }`}
+          >
+            {toast.message}
+          </div>
+        </div>
+      )}
+
       <div>
-        <h1 className="mb-2 text-3xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-600">Control your preferences and notifications.</p>
+        <h1 className="mb-2 text-3xl font-semibold text-navy-900">Settings</h1>
+        <p className="text-ink-600">Control your preferences, notifications, and integrations.</p>
       </div>
 
-      <div className="p-6 bg-white rounded-lg shadow">
+      {/* Plan & Usage */}
+      <div className="card-surface rounded-lg p-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Plan & Usage</h2>
-            <p className="text-sm text-gray-500">
+            <h2 className="text-xl font-semibold text-navy-900">Plan &amp; Usage</h2>
+            <p className="text-sm text-ink-500">
               {planUsage?.plan?.name
                 ? `${planUsage.plan.name} plan`
                 : "No active plan found"}
             </p>
           </div>
           {planUsage?.plan && (
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-ink-600">
               {planUsage.plan.monthly_minutes_limit} minutes/month
             </div>
           )}
         </div>
         {planLoading ? (
-          <div className="mt-4 text-sm text-gray-500">Loading usage...</div>
+          <div className="mt-4 text-sm text-ink-500">Loading usage…</div>
         ) : planError ? (
-          <div className="mt-4 text-sm text-red-600">{planError}</div>
+          <div className="mt-4 text-sm text-accent-700">{planError}</div>
         ) : planUsage?.plan ? (
           <div className="mt-4 space-y-3">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600">Used</span>
-              <span className="font-semibold text-gray-900">
+              <span className="text-ink-600">Used</span>
+              <span className="font-semibold text-navy-900">
                 {formatMinutes(planUsage.usage?.used_minutes)} min
               </span>
             </div>
-                <div className="h-2 bg-gray-200 rounded-full">
+            <div className="h-2 bg-navy-50 rounded-full overflow-hidden">
               <div
-                    className="h-2 transition-all rounded-full bg-emerald-500"
+                className="h-2 transition-all rounded-full bg-emerald-500"
                 style={{ width: `${planUsage.usage?.usage_percent || 0}%` }}
               />
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600">Remaining</span>
-              <span className="font-semibold text-gray-900">
+              <span className="text-ink-600">Remaining</span>
+              <span className="font-semibold text-navy-900">
                 {formatMinutes(planUsage.usage?.remaining_minutes)} min
               </span>
             </div>
-            <div className="text-xs text-gray-500">
-              Billing period: {formatDate(planUsage.usage?.period_start)} -{" "}
+            <div className="text-xs text-ink-500">
+              Billing period: {formatDate(planUsage.usage?.period_start)} –{" "}
               {formatDate(planUsage.usage?.period_end)}
             </div>
           </div>
         ) : (
-          <div className="mt-4 text-sm text-gray-500">
+          <div className="mt-4 text-sm text-ink-500">
             Assign a subscription to start tracking usage.
           </div>
         )}
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="p-6 space-y-4 bg-white rounded-lg shadow">
-          <h2 className="text-lg font-semibold text-gray-900">Notifications</h2>
+        {/* Notifications */}
+        <div className="card-surface rounded-lg p-6 space-y-4">
+          <h2 className="text-lg font-semibold text-navy-900">Notifications</h2>
           <PushNotificationToggle />
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between opacity-70">
             <div>
-              <p className="text-sm font-medium text-gray-800">Usage alerts</p>
-              <p className="text-xs text-gray-500">Email me at 80% and 100% usage.</p>
+              <p className="text-sm font-medium text-navy-900">Usage alerts</p>
+              <p className="text-xs text-ink-500">Email me at 80% and 100% usage.</p>
             </div>
-            <button className="px-3 py-1.5 rounded-full bg-gray-100 text-gray-700 text-sm">
+            <span className="px-2.5 py-1 rounded-full bg-navy-50 text-ink-500 text-xs font-medium">
               Coming soon
-            </button>
+            </span>
           </div>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between opacity-70">
             <div>
-              <p className="text-sm font-medium text-gray-800">Weekly summary</p>
-              <p className="text-xs text-gray-500">Receive weekly call summaries.</p>
+              <p className="text-sm font-medium text-navy-900">Weekly summary</p>
+              <p className="text-xs text-ink-500">Receive weekly call summaries.</p>
             </div>
-            <button className="px-3 py-1.5 rounded-full bg-gray-100 text-gray-700 text-sm">
+            <span className="px-2.5 py-1 rounded-full bg-navy-50 text-ink-500 text-xs font-medium">
               Coming soon
-            </button>
+            </span>
           </div>
         </div>
 
-        <div className="p-6 space-y-4 bg-white rounded-lg shadow">
-          <h2 className="text-lg font-semibold text-gray-900">Billing</h2>
-          <p className="text-sm text-gray-600">
-            Update your plan or payment method from your billing portal.
+        {/* Billing */}
+        <div className="card-surface rounded-lg p-6 space-y-4">
+          <h2 className="text-lg font-semibold text-navy-900">Billing</h2>
+          <p className="text-sm text-ink-600">
+            Your plan is managed by your account manager. To upgrade, change, or ask
+            about your plan, get in touch and we'll sort it out.
           </p>
-          <button className="px-4 py-2 text-sm text-white bg-gray-900 rounded-lg">
-            Open billing portal
-          </button>
+          <a
+            href="mailto:support@candibly.com?subject=Plan%20change%20request"
+            className="inline-flex btn-primary"
+          >
+            Contact us about billing
+          </a>
         </div>
 
-        <div className="p-6 space-y-4 bg-white rounded-lg shadow">
-          <h2 className="text-lg font-semibold text-gray-900">Appointments</h2>
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-medium text-gray-800">
-                Automate appointment creation
-              </p>
-              <p className="text-xs text-gray-500">
-                Automatically create Cal.com bookings when leads are qualified.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={handleToggleAutoCreate}
-              disabled={calSaving}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                calConfig.autoCreateAppointments ? "bg-emerald-500" : "bg-gray-300"
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                  calConfig.autoCreateAppointments ? "translate-x-6" : "translate-x-1"
-                }`}
-              />
-            </button>
-          </div>
-          {calError && <p className="text-xs text-red-600">{calError}</p>}
-        </div>
-
-        <div className="p-6 space-y-4 bg-white rounded-lg shadow">
+        {/* SMS */}
+        <div className="card-surface rounded-lg p-6 space-y-4">
           <div>
-            <label className="block mb-2 text-sm font-medium text-gray-700">
+            <h2 className="text-lg font-semibold text-navy-900">Text messages (SMS)</h2>
+            <p className="text-sm text-ink-500">
+              How we format phone numbers when texting your leads.
+            </p>
+          </div>
+          <div>
+            <label className="block mb-2 text-sm font-medium text-ink-700">
               Default country code
             </label>
             <div className="relative">
@@ -323,18 +290,17 @@ function Settings() {
                 onClick={() => setSmsCountryOpen((prev) => !prev)}
                 aria-haspopup="listbox"
                 aria-expanded={smsCountryOpen}
-                className="flex items-center w-full gap-3 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="flex items-center w-full gap-3 px-4 py-2 border border-navy-200 rounded-lg focus:border-accent-600 focus:outline-none focus:ring-2 focus:ring-accent-600/20"
               >
                 <FlagImage iso2={smsCountryIso2} size="20px" />
-                <span className="text-sm text-gray-700">
+                <span className="text-sm text-ink-700">
                   {selectedSmsCountry?.name || "Select country"}
                 </span>
-                <span className="ml-auto text-sm font-medium text-gray-900">
+                <span className="ml-auto text-sm font-medium text-navy-900">
                   {selectedSmsCountry?.dialCode
                     ? `+${selectedSmsCountry.dialCode}`
                     : smsConfig.defaultCountryCode}
                 </span>
-                <span className="text-gray-400">▾</span>
               </button>
               <CountrySelectorDropdown
                 show={smsCountryOpen}
@@ -344,7 +310,7 @@ function Settings() {
                 className="absolute z-50 w-full mt-2"
               />
             </div>
-            <p className="mt-2 text-xs text-gray-500">
+            <p className="mt-2 text-xs text-ink-500">
               Used when a phone number doesn't include a country code.
             </p>
           </div>
@@ -353,14 +319,21 @@ function Settings() {
               type="button"
               onClick={handleSmsSave}
               disabled={smsSaving}
-              className="px-4 py-2 text-sm text-white bg-gray-900 rounded-lg disabled:opacity-60"
+              className="btn-primary disabled:opacity-60"
             >
-              {smsSaving ? "Saving..." : "Save Country Code"}
+              {smsSaving ? "Saving…" : "Save country code"}
             </button>
-            {smsError && <p className="text-xs text-red-600">{smsError}</p>}
+            {smsError && <p className="text-xs text-accent-700">{smsError}</p>}
           </div>
         </div>
       </div>
+
+      {/* Integrations (end clients) */}
+      {!isSuperAdmin() && (
+        <Suspense fallback={null}>
+          <IntegrationSection />
+        </Suspense>
+      )}
     </div>
   );
 }
@@ -388,8 +361,8 @@ function PushNotificationToggle() {
     return (
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-800">Push notifications</p>
-          <p className="text-xs text-gray-500">Receive alerts for new leads and appointments.</p>
+          <p className="text-sm font-medium text-navy-900">Push notifications</p>
+          <p className="text-xs text-ink-500">Receive alerts for new leads and appointments.</p>
         </div>
         <span className="px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-700 text-sm font-medium">
           Enabled
@@ -402,12 +375,12 @@ function PushNotificationToggle() {
     return (
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-800">Push notifications</p>
-          <p className="text-xs text-red-500">
+          <p className="text-sm font-medium text-navy-900">Push notifications</p>
+          <p className="text-xs text-accent-700">
             Blocked by browser. On iPhone: Settings → Safari → {window.location.hostname} → Notifications → Allow.
           </p>
         </div>
-        <span className="px-3 py-1.5 rounded-full bg-red-100 text-red-700 text-sm font-medium">
+        <span className="px-3 py-1.5 rounded-full bg-accent-600/10 text-accent-700 text-sm font-medium">
           Blocked
         </span>
       </div>
@@ -418,19 +391,19 @@ function PushNotificationToggle() {
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-800">Push notifications</p>
-          <p className="text-xs text-gray-500">Receive alerts for new leads and appointments.</p>
+          <p className="text-sm font-medium text-navy-900">Push notifications</p>
+          <p className="text-xs text-ink-500">Receive alerts for new leads and appointments.</p>
         </div>
         <button
           type="button"
           onClick={handleEnable}
           disabled={requesting}
-          className="px-3 py-1.5 rounded-full bg-gray-900 text-white text-sm font-medium disabled:opacity-60"
+          className="px-3 py-1.5 rounded-full bg-accent-600 text-white text-sm font-medium hover:bg-accent-700 disabled:opacity-60"
         >
-          {requesting ? "Requesting..." : "Enable"}
+          {requesting ? "Requesting…" : "Enable"}
         </button>
       </div>
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p className="text-xs text-accent-700">{error}</p>}
     </div>
   );
 }

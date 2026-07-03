@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { agentAPI, planAPI, userAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import FilterPanel from './FilterPanel';
 
 function UserManagement() {
   const { isAdmin, isSuperAdmin } = useAuth();
@@ -9,6 +10,7 @@ function UserManagement() {
   const [error, setError] = useState(null);
   const [pagination, setPagination] = useState({ total: 0, limit: 20, offset: 0, hasMore: false });
   const [filters, setFilters] = useState({ role: '', status: '', search: '' });
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [showAssignments, setShowAssignments] = useState(false);
@@ -86,7 +88,7 @@ function UserManagement() {
 
   if (!isAdmin()) {
     return (
-      <div className="text-center py-12 text-red-600">
+      <div className="text-center py-12 text-accent-700">
         You don't have permission to access this page.
       </div>
     );
@@ -115,29 +117,39 @@ function UserManagement() {
         </div>
       )}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-        <p className="text-gray-600 mt-1">Manage system users (Admin only)</p>
+        <h1 className="text-3xl font-bold text-navy-900">User Management</h1>
+        <p className="text-ink-600 mt-1">Manage system users (Admin only)</p>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4">
+      <FilterPanel
+        open={filtersOpen}
+        onToggle={() => setFiltersOpen((o) => !o)}
+        activeCount={
+          (filters.search ? 1 : 0) + (filters.role ? 1 : 0) + (filters.status ? 1 : 0)
+        }
+        onClear={() => {
+          setFilters({ role: '', status: '', search: '' });
+          setPagination((prev) => ({ ...prev, offset: 0 }));
+        }}
+      >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
+            <label className="block text-xs font-semibold uppercase tracking-wide text-ink-500 mb-1.5">Search</label>
             <input
               type="text"
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
               placeholder="Search by email or name..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-navy-200 rounded-lg text-sm focus:border-accent-600 focus:outline-none focus:ring-2 focus:ring-accent-600/20"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
+            <label className="block text-xs font-semibold uppercase tracking-wide text-ink-500 mb-1.5">Role</label>
             <select
               value={filters.role}
               onChange={(e) => setFilters({ ...filters, role: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-navy-200 rounded-lg text-sm focus:border-accent-600 focus:outline-none focus:ring-2 focus:ring-accent-600/20"
             >
               <option value="">All Roles</option>
               <option value="USER">User</option>
@@ -146,11 +158,11 @@ function UserManagement() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+            <label className="block text-xs font-semibold uppercase tracking-wide text-ink-500 mb-1.5">Status</label>
             <select
               value={filters.status}
               onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-navy-200 rounded-lg text-sm focus:border-accent-600 focus:outline-none focus:ring-2 focus:ring-accent-600/20"
             >
               <option value="">All Statuses</option>
               <option value="PENDING">Pending</option>
@@ -159,14 +171,14 @@ function UserManagement() {
             </select>
           </div>
         </div>
-      </div>
+      </FilterPanel>
 
       {/* Users Table */}
       {loading ? (
         <div className="text-center py-12">Loading users...</div>
       ) : error ? (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-600">Error: {error}</p>
+        <div className="bg-accent-600/10 border border-accent-600/20 rounded-lg p-4">
+          <p className="text-accent-700">Error: {error}</p>
         </div>
       ) : (
         <>
@@ -176,14 +188,14 @@ function UserManagement() {
               {users.map((user) => (
                 <div
                   key={user.id}
-                  className="w-[85vw] max-w-sm flex-shrink-0 rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
+                  className="w-[85vw] max-w-sm flex-shrink-0 rounded-lg border border-navy-100 bg-white p-4 shadow-sm"
                 >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-gray-900">
+                    <p className="truncate text-sm font-semibold text-navy-900">
                       {user.email}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-ink-500">
                       {user.name || "N/A"}
                     </p>
                   </div>
@@ -200,15 +212,15 @@ function UserManagement() {
                   </span>
                 </div>
 
-                <div className="mt-3 grid gap-2 text-sm text-gray-600">
+                <div className="mt-3 grid gap-2 text-sm text-ink-600">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs uppercase tracking-wide text-gray-400">
+                    <span className="text-xs uppercase tracking-wide text-ink-400">
                       Phone
                     </span>
                     <span>{user.phone || "N/A"}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs uppercase tracking-wide text-gray-400">
+                    <span className="text-xs uppercase tracking-wide text-ink-400">
                       Phone Status
                     </span>
                     <span
@@ -217,7 +229,7 @@ function UserManagement() {
                           ? user.phone_verified_at
                             ? "bg-emerald-100 text-emerald-800"
                             : "bg-yellow-100 text-yellow-800"
-                          : "bg-gray-100 text-gray-800"
+                          : "bg-navy-50 text-navy-800"
                       }`}
                     >
                       {user.phone
@@ -228,7 +240,7 @@ function UserManagement() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs uppercase tracking-wide text-gray-400">
+                    <span className="text-xs uppercase tracking-wide text-ink-400">
                       Role
                     </span>
                     <span
@@ -237,14 +249,14 @@ function UserManagement() {
                           ? "bg-amber-100 text-amber-800"
                           : user.role === "ADMIN"
                             ? "bg-purple-100 text-purple-800"
-                            : "bg-gray-100 text-gray-800"
+                            : "bg-navy-50 text-navy-800"
                       }`}
                     >
                       {user.role}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs uppercase tracking-wide text-gray-400">
+                    <span className="text-xs uppercase tracking-wide text-ink-400">
                       Created
                     </span>
                     <span>{new Date(user.created_at).toLocaleDateString()}</span>
@@ -269,7 +281,7 @@ function UserManagement() {
                           showToast(`Failed to approve user: ${err.message}`);
                         }
                       }}
-                      className="text-gray-900 hover:text-gray-700"
+                      className="text-navy-900 hover:text-ink-700"
                     >
                       Approve
                     </button>
@@ -277,21 +289,21 @@ function UserManagement() {
                   <button
                     onClick={() => handleEdit(user)}
                     disabled={user.role === "SUPERADMIN" && !isSuperAdmin()}
-                    className="text-gray-900 hover:text-gray-700 disabled:opacity-50"
+                    className="text-navy-900 hover:text-ink-700 disabled:opacity-50"
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => handleAssignAgents(user)}
                     disabled={user.role === "SUPERADMIN" && !isSuperAdmin()}
-                    className="text-gray-900 hover:text-gray-700 disabled:opacity-50"
+                    className="text-navy-900 hover:text-ink-700 disabled:opacity-50"
                   >
                     Assign Agents
                   </button>
                   {isSuperAdmin() && user.role === "USER" && (
                     <button
                       onClick={() => handleAssignPlan(user)}
-                      className="text-gray-900 hover:text-gray-700"
+                      className="text-navy-900 hover:text-ink-700"
                     >
                       Assign Plan
                     </button>
@@ -310,31 +322,30 @@ function UserManagement() {
           </div>
 
           {/* Desktop Table */}
-          <div className="hidden bg-white rounded-lg shadow overflow-x-auto md:block">
-            <div className="w-full">
-              <table className="min-w-[900px] w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+          <div className="hidden card-surface rounded-lg overflow-x-auto md:block">
+            <table className="min-w-[900px] w-full divide-y divide-navy-100">
+              <thead className="bg-navy-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-ink-500 uppercase">Email</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-ink-500 uppercase">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-ink-500 uppercase">Phone</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-ink-500 uppercase">Phone Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-ink-500 uppercase">Role</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-ink-500 uppercase">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-ink-500 uppercase">Created</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-ink-500 uppercase">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-navy-100">
                 {users.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <tr key={user.id} className="hover:bg-navy-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-navy-900">
                       {user.email}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-ink-500">
                       {user.name || 'N/A'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-ink-500">
                       {user.phone || 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -344,7 +355,7 @@ function UserManagement() {
                             ? user.phone_verified_at
                               ? 'bg-emerald-100 text-emerald-800'
                               : 'bg-yellow-100 text-yellow-800'
-                            : 'bg-gray-100 text-gray-800'
+                            : 'bg-navy-50 text-navy-800'
                         }`}
                       >
                         {user.phone
@@ -361,7 +372,7 @@ function UserManagement() {
                             ? 'bg-amber-100 text-amber-800'
                             : user.role === 'ADMIN'
                               ? 'bg-purple-100 text-purple-800'
-                              : 'bg-gray-100 text-gray-800'
+                              : 'bg-navy-50 text-navy-800'
                         }`}
                       >
                         {user.role}
@@ -380,7 +391,7 @@ function UserManagement() {
                         {user.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-ink-500">
                       {new Date(user.created_at).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -401,7 +412,7 @@ function UserManagement() {
                             showToast(`Failed to approve user: ${err.message}`);
                           }
                         }}
-                          className="text-gray-900 hover:text-gray-700 mr-4"
+                          className="text-navy-900 hover:text-ink-700 mr-4"
                         >
                           Approve
                         </button>
@@ -409,21 +420,21 @@ function UserManagement() {
                       <button
                         onClick={() => handleEdit(user)}
                         disabled={user.role === 'SUPERADMIN' && !isSuperAdmin()}
-                        className="text-gray-900 hover:text-gray-700 mr-4 disabled:opacity-50"
+                        className="text-navy-900 hover:text-ink-700 mr-4 disabled:opacity-50"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => handleAssignAgents(user)}
                         disabled={user.role === 'SUPERADMIN' && !isSuperAdmin()}
-                        className="text-gray-900 hover:text-gray-700 mr-4 disabled:opacity-50"
+                        className="text-navy-900 hover:text-ink-700 mr-4 disabled:opacity-50"
                       >
                         Assign Agents
                       </button>
                       {isSuperAdmin() && user.role === 'USER' && (
                         <button
                           onClick={() => handleAssignPlan(user)}
-                          className="text-gray-900 hover:text-gray-700 mr-4"
+                          className="text-navy-900 hover:text-ink-700 mr-4"
                         >
                           Assign Plan
                         </button>
@@ -439,13 +450,12 @@ function UserManagement() {
                   </tr>
                 ))}
               </tbody>
-              </table>
-            </div>
+            </table>
           </div>
 
           {/* Pagination */}
           <div className="flex justify-between items-center">
-            <div className="text-sm text-gray-700">
+            <div className="text-sm text-ink-700">
               Showing {pagination.offset + 1} to{' '}
               {Math.min(pagination.offset + pagination.limit, pagination.total)} of{' '}
               {pagination.total} users
@@ -456,7 +466,7 @@ function UserManagement() {
                   setPagination({ ...pagination, offset: Math.max(0, pagination.offset - pagination.limit) })
                 }
                 disabled={pagination.offset === 0}
-                className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50"
+                className="px-4 py-2 border border-navy-200 rounded-lg disabled:opacity-50"
               >
                 Previous
               </button>
@@ -465,7 +475,7 @@ function UserManagement() {
                   setPagination({ ...pagination, offset: pagination.offset + pagination.limit })
                 }
                 disabled={!pagination.hasMore}
-                className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50"
+                className="px-4 py-2 border border-navy-200 rounded-lg disabled:opacity-50"
               >
                 Next
               </button>
@@ -549,35 +559,35 @@ function UserModal({ user, onClose, onSave }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-ink-900/40 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md">
         <h2 className="text-2xl font-bold mb-4">Edit User</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+            <label className="block text-sm font-medium text-ink-700 mb-2">Email</label>
             <input
               type="email"
               value={user.email}
               disabled
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
+              className="w-full px-4 py-2 border border-navy-200 rounded-lg bg-navy-50"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+            <label className="block text-sm font-medium text-ink-700 mb-2">Name</label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-navy-200 rounded-lg focus:border-accent-600 focus:ring-2 focus:ring-accent-600/20"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
+            <label className="block text-sm font-medium text-ink-700 mb-2">Role</label>
             <select
               value={formData.role}
               onChange={(e) => setFormData({ ...formData, role: e.target.value })}
               disabled={roleDisabled}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
+              className="w-full px-4 py-2 border border-navy-200 rounded-lg focus:border-accent-600 focus:ring-2 focus:ring-accent-600/20 disabled:bg-navy-50"
             >
               <option value="USER">User</option>
               <option value="ADMIN">Admin</option>
@@ -586,27 +596,27 @@ function UserModal({ user, onClose, onSave }) {
               </option>
             </select>
             {currentUser.id === user.id && (
-              <p className="text-xs text-gray-500 mt-1">Cannot change your own role</p>
+              <p className="text-xs text-ink-500 mt-1">Cannot change your own role</p>
             )}
             {isEditingSuperAdmin && !canEditSuperAdmin && (
-              <p className="text-xs text-gray-500 mt-1">Only a super admin can edit this role</p>
+              <p className="text-xs text-ink-500 mt-1">Only a super admin can edit this role</p>
             )}
           </div>
           {error && (
-            <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg">{error}</div>
+            <div className="text-accent-700 text-sm bg-accent-600/10 p-3 rounded-lg">{error}</div>
           )}
           <div className="flex justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="px-4 py-2 border border-navy-200 rounded-lg hover:bg-navy-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50"
+              className="px-4 py-2 bg-accent-600 text-white rounded-lg hover:bg-accent-700 disabled:opacity-50"
             >
               {loading ? 'Saving...' : 'Save'}
             </button>
@@ -697,74 +707,74 @@ function AgentAssignmentModal({ user, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-ink-900/40 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold">Assign Agents</h2>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-ink-600 mt-1">
               {user?.email} - {assignedIds.size} assigned
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-ink-500 hover:text-ink-700"
           >
             Close
           </button>
         </div>
 
         <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Search agents</label>
+          <label className="block text-sm font-medium text-ink-700 mb-2">Search agents</label>
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name or agent ID..."
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-navy-200 rounded-lg focus:border-accent-600 focus:ring-2 focus:ring-accent-600/20"
           />
         </div>
 
         {error && (
-          <div className="mt-4 text-red-600 text-sm bg-red-50 p-3 rounded-lg">
+          <div className="mt-4 text-accent-700 text-sm bg-accent-600/10 p-3 rounded-lg">
             {error}
           </div>
         )}
 
-        <div className="mt-4 flex-1 overflow-y-auto border border-gray-200 rounded-lg">
+        <div className="mt-4 flex-1 overflow-y-auto border border-navy-100 rounded-lg">
           {loading ? (
-            <div className="text-center py-10 text-gray-600">Loading agents...</div>
+            <div className="text-center py-10 text-ink-600">Loading agents...</div>
           ) : filteredAgents.length === 0 ? (
-            <div className="text-center py-10 text-gray-600">No agents found.</div>
+            <div className="text-center py-10 text-ink-600">No agents found.</div>
           ) : (
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50 sticky top-0">
+            <table className="min-w-full divide-y divide-navy-100">
+              <thead className="bg-navy-50 sticky top-0">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-ink-500 uppercase">
                     Agent
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-ink-500 uppercase">
                     Status
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-4 py-3 text-right text-xs font-medium text-ink-500 uppercase">
                     Action
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-navy-100">
                 {filteredAgents.map((agent) => {
                   const isAssigned = assignedIds.has(agent.agent_id);
                   const isSaving = savingId === agent.agent_id;
                   return (
-                    <tr key={agent.agent_id} className="hover:bg-gray-50">
+                    <tr key={agent.agent_id} className="hover:bg-navy-50">
                       <td className="px-4 py-3">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-navy-900">
                           {agent.agent_name}
                         </div>
-                        <div className="text-xs text-gray-500">{agent.agent_id}</div>
+                        <div className="text-xs text-ink-500">{agent.agent_id}</div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
+                      <td className="px-4 py-3 text-sm text-ink-600">
                         {agent.status || 'UNKNOWN'}
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-medium">
@@ -774,8 +784,8 @@ function AgentAssignmentModal({ user, onClose }) {
                           disabled={isSaving}
                           className={`px-3 py-1 rounded-lg border text-sm ${
                             isAssigned
-                              ? 'border-gray-900 bg-gray-900 text-white hover:bg-gray-800'
-                              : 'border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white'
+                              ? 'border-accent-600 bg-accent-600 text-white hover:bg-accent-700'
+                              : 'border-accent-600 text-navy-900 hover:bg-accent-600 hover:text-white'
                           } disabled:opacity-60`}
                         >
                           {isSaving ? 'Saving...' : isAssigned ? 'Unassign' : 'Assign'}
@@ -790,7 +800,7 @@ function AgentAssignmentModal({ user, onClose }) {
         </div>
 
         {hasMoreAgents && (
-          <p className="mt-3 text-xs text-gray-500">
+          <p className="mt-3 text-xs text-ink-500">
             Showing the first 100 agents. Refine search if you don't see the one you need.
           </p>
         )}
@@ -851,34 +861,34 @@ function PlanAssignmentModal({ user, onClose, onAssigned, onError }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-ink-900/40 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold">Assign Plan</h2>
-            <p className="text-sm text-gray-600 mt-1">{user?.email}</p>
+            <p className="text-sm text-ink-600 mt-1">{user?.email}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-ink-500 hover:text-ink-700"
           >
             Close
           </button>
         </div>
 
         {loading ? (
-          <div className="mt-4 text-sm text-gray-600">Loading plans...</div>
+          <div className="mt-4 text-sm text-ink-600">Loading plans...</div>
         ) : (
           <div className="mt-4 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-ink-700 mb-2">
                 Plan
               </label>
               <select
                 value={planCode}
                 onChange={(e) => setPlanCode(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-navy-200 rounded-lg focus:border-accent-600 focus:ring-2 focus:ring-accent-600/20"
               >
                 {plans.map((plan) => (
                   <option key={plan.id} value={plan.code}>
@@ -888,7 +898,7 @@ function PlanAssignmentModal({ user, onClose, onAssigned, onError }) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-ink-700 mb-2">
                 Period (days)
               </label>
               <input
@@ -897,14 +907,14 @@ function PlanAssignmentModal({ user, onClose, onAssigned, onError }) {
                 max="365"
                 value={periodDays}
                 onChange={(e) => setPeriodDays(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-navy-200 rounded-lg focus:border-accent-600 focus:ring-2 focus:ring-accent-600/20"
               />
             </div>
           </div>
         )}
 
         {error && (
-          <div className="mt-4 text-red-600 text-sm bg-red-50 p-3 rounded-lg">
+          <div className="mt-4 text-accent-700 text-sm bg-accent-600/10 p-3 rounded-lg">
             {error}
           </div>
         )}
@@ -913,7 +923,7 @@ function PlanAssignmentModal({ user, onClose, onAssigned, onError }) {
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+            className="px-4 py-2 border border-navy-200 rounded-lg hover:bg-navy-50"
           >
             Cancel
           </button>
@@ -921,7 +931,7 @@ function PlanAssignmentModal({ user, onClose, onAssigned, onError }) {
             type="button"
             onClick={handleAssign}
             disabled={loading || saving}
-            className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50"
+            className="px-4 py-2 bg-accent-600 text-white rounded-lg hover:bg-accent-700 disabled:opacity-50"
           >
             {saving ? 'Assigning...' : 'Assign Plan'}
           </button>
