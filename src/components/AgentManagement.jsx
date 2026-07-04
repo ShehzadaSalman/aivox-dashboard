@@ -159,12 +159,6 @@ function AgentManagement() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Link
-                      to={`/dashboard/agents/${agent.agent_id}`}
-                      className="rounded-lg bg-accent-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-accent-700"
-                    >
-                      Configure
-                    </Link>
                     {superAdmin && (
                       <button
                         onClick={() => handleDelete(agent.agent_id)}

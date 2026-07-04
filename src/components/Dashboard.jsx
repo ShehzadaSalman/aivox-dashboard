@@ -19,7 +19,6 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import DashboardOverview from "./DashboardOverview";
 import AgentManagement from "./AgentManagement";
-import AgentDetail from "./AgentDetail";
 import CallManagement from "./CallManagement";
 import Leads from "./Leads";
 import Appointments from "./Appointments";
@@ -257,7 +256,7 @@ function Dashboard() {
           <Routes>
             <Route path="/" element={<DashboardOverview />} />
             <Route path="/agents" element={<AgentManagement />} />
-            <Route path="/agents/:agentId" element={<AgentDetail />} />
+            <Route path="/agents/:agentId" element={<Navigate to="/dashboard/agents" replace />} />
             <Route path="/calls" element={<CallManagement />} />
             <Route path="/leads" element={<Leads />} />
             <Route
