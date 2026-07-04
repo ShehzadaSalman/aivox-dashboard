@@ -48,10 +48,10 @@ function PendingApproval({ email, onBack }) {
         <p className="mt-6 text-sm text-ink-500">
           Need it sooner? Reach us at{" "}
           <a
-            href="mailto:support@candibly.com"
+            href="mailto:support@candibly.online"
             className="font-semibold text-navy-900 underline decoration-accent-600/40 hover:text-accent-600"
           >
-            support@candibly.com
+            support@candibly.online
           </a>
           .
         </p>

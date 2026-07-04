@@ -282,10 +282,10 @@ function AgentsEmptyState({ isAdmin, hasSearch, search, onSync, syncing }) {
       <p className="mt-5 text-sm text-ink-500">
         Questions? Email{' '}
         <a
-          href="mailto:support@candibly.com"
+          href="mailto:support@candibly.online"
           className="font-semibold text-navy-900 underline decoration-accent-600/40 hover:text-accent-600"
         >
-          support@candibly.com
+          support@candibly.online
         </a>
         .
       </p>

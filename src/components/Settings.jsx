@@ -265,7 +265,7 @@ function Settings() {
             about your plan, get in touch and we'll sort it out.
           </p>
           <a
-            href="mailto:support@candibly.com?subject=Plan%20change%20request"
+            href="mailto:support@candibly.online?subject=Plan%20change%20request"
             className="inline-flex btn-primary"
           >
             Contact us about billing
