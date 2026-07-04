@@ -21,6 +21,11 @@ const STATUS_STYLES = {
   qualified: "bg-navy-700/10 text-navy-800 border-navy-700/20",
 };
 
+const hasValue = (value) => {
+  const trimmed = String(value ?? "").trim();
+  return Boolean(trimmed) && trimmed.toLowerCase() !== "unknown";
+};
+
 const normalizeCountryCode = (value) => {
   const trimmed = String(value || "").trim();
   if (!trimmed) {
@@ -287,46 +292,42 @@ function Leads() {
           </p>
         </div>
       ) : (
-        <div className="card-surface rounded-lg overflow-x-auto">
-          <table className="min-w-[920px] w-full divide-y divide-navy-100">
-            <thead className="bg-navy-50">
-              <tr>
-                <Th>Lead</Th>
-                <Th>Contact</Th>
-                <Th>Agent</Th>
-                <Th>Captured</Th>
-                <Th>Status</Th>
-                <Th className="text-right">Actions</Th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-navy-100">
-              {filteredLeads.map((lead) => {
-                const status = statusOf(lead);
-                const phone = formatLeadPhone(lead.phone);
-                const booked =
-                  bookedLeads[lead.id] ||
-                  (lead.bookedAt ? formatReadableDateTime(lead.bookedAt) : null);
-                return (
-                  <tr key={lead.id} className="align-top hover:bg-navy-50/60">
-                    <td className="px-4 py-3 max-w-[260px]">
-                      <div className="font-medium text-navy-900">
-                        {lead.reason || "New caller"}
-                      </div>
-                      <div className="text-xs text-ink-500 mt-0.5">
-                        {lead.name}
-                        {lead.company ? ` · ${lead.company}` : ""}
-                      </div>
-                      {lead.visitTime && (
-                        <div className="text-xs text-ink-400 mt-1">
-                          Wants: {lead.visitTime}
+        <>
+          {/* Mobile: stacked cards (below md) */}
+          <div className="md:hidden space-y-3">
+            {filteredLeads.map((lead) => {
+              const status = statusOf(lead);
+              const phone = formatLeadPhone(lead.phone);
+              const booked =
+                bookedLeads[lead.id] ||
+                (lead.bookedAt ? formatReadableDateTime(lead.bookedAt) : null);
+              return (
+                <div key={lead.id} className="card-surface rounded-lg p-4">
+                  <div className="font-medium text-navy-900">
+                    {lead.reason || "New caller"}
+                  </div>
+                  {(hasValue(lead.name) || lead.company) && (
+                    <div className="text-xs text-ink-500 mt-0.5">
+                      {hasValue(lead.name) ? lead.name : ""}
+                      {lead.company
+                        ? `${hasValue(lead.name) ? " · " : ""}${lead.company}`
+                        : ""}
+                    </div>
+                  )}
+                  {lead.visitTime && (
+                    <div className="text-xs text-ink-400 mt-1">
+                      Wants: {lead.visitTime}
+                    </div>
+                  )}
+
+                  {(phone || lead.email) && (
+                    <div className="mt-3 text-sm">
+                      {phone && <div className="text-ink-700">{phone}</div>}
+                      {lead.email && (
+                        <div className="text-xs text-ink-500 truncate">
+                          {lead.email}
                         </div>
                       )}
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      <div className="text-ink-700">{phone || "—"}</div>
-                      <div className="text-xs text-ink-500 truncate max-w-[200px]">
-                        {lead.email || "—"}
-                      </div>
                       {phone && (
                         <div className="flex gap-3 mt-1">
                           <a
@@ -343,66 +344,193 @@ function Leads() {
                           </a>
                         </div>
                       )}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-ink-600">
-                      {lead.agentName || "—"}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-ink-600 whitespace-nowrap">
-                      {lead.createdAt || "—"}
-                    </td>
-                    <td className="px-4 py-3">
-                      {booked && (
-                        <div className="mb-1.5">
-                          <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-xs font-semibold text-emerald-700">
-                            ✓ Booked
-                          </span>
-                          <div className="text-xs text-ink-400 mt-0.5">{booked}</div>
-                        </div>
+                    </div>
+                  )}
+
+                  {(lead.agentName || lead.createdAt) && (
+                    <div className="mt-3 flex items-center justify-between text-xs text-ink-500">
+                      {lead.agentName && <span>{lead.agentName}</span>}
+                      {lead.createdAt && (
+                        <span className="whitespace-nowrap">{lead.createdAt}</span>
                       )}
-                      <label className="sr-only" htmlFor={`status-${lead.id}`}>
-                        Update status
-                      </label>
-                      <select
-                        id={`status-${lead.id}`}
-                        value={status}
-                        disabled={savingStatusId === lead.id}
-                        onChange={(e) => handleStatusChange(lead, e.target.value)}
-                        className={`rounded-lg border px-2 py-1 text-xs font-semibold capitalize focus:border-accent-600 focus:outline-none focus:ring-2 focus:ring-accent-600/20 disabled:opacity-50 ${
-                          STATUS_STYLES[status] || STATUS_STYLES.new
-                        }`}
-                      >
-                        {STATUS_OPTIONS.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex flex-wrap items-center justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setBookingLead(lead)}
-                          className="rounded-lg bg-accent-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-accent-700"
-                        >
-                          {booked ? "Book again" : "Book"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(lead.id)}
-                          disabled={deletingId === lead.id}
-                          className="rounded-lg border border-accent-600/30 px-3 py-1.5 text-xs font-semibold text-accent-700 hover:bg-accent-600/10 disabled:opacity-50"
-                        >
-                          {deletingId === lead.id ? "Deleting..." : "Delete"}
-                        </button>
+                    </div>
+                  )}
+
+                  <div className="mt-3">
+                    {booked && (
+                      <div className="mb-1.5">
+                        <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                          ✓ Booked
+                        </span>
+                        <div className="text-xs text-ink-400 mt-0.5">{booked}</div>
                       </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                    )}
+                    <label className="sr-only" htmlFor={`status-mobile-${lead.id}`}>
+                      Update status
+                    </label>
+                    <select
+                      id={`status-mobile-${lead.id}`}
+                      value={status}
+                      disabled={savingStatusId === lead.id}
+                      onChange={(e) => handleStatusChange(lead, e.target.value)}
+                      className={`w-full rounded-lg border px-2 py-1.5 text-xs font-semibold capitalize focus:border-accent-600 focus:outline-none focus:ring-2 focus:ring-accent-600/20 disabled:opacity-50 ${
+                        STATUS_STYLES[status] || STATUS_STYLES.new
+                      }`}
+                    >
+                      {STATUS_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="mt-3 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setBookingLead(lead)}
+                      className="flex-1 rounded-lg bg-accent-600 px-3 py-2 text-xs font-semibold text-white hover:bg-accent-700"
+                    >
+                      {booked ? "Book again" : "Book"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(lead.id)}
+                      disabled={deletingId === lead.id}
+                      className="flex-1 rounded-lg border border-accent-600/30 px-3 py-2 text-xs font-semibold text-accent-700 hover:bg-accent-600/10 disabled:opacity-50"
+                    >
+                      {deletingId === lead.id ? "Deleting..." : "Delete"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop/tablet: table (md and up) */}
+          <div className="card-surface rounded-lg overflow-x-auto hidden md:block">
+            <table className="w-full divide-y divide-navy-100">
+              <thead className="bg-navy-50">
+                <tr>
+                  <Th>Lead</Th>
+                  <Th>Contact</Th>
+                  <Th>Agent</Th>
+                  <Th>Captured</Th>
+                  <Th>Status</Th>
+                  <Th className="text-right">Actions</Th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-navy-100">
+                {filteredLeads.map((lead) => {
+                  const status = statusOf(lead);
+                  const phone = formatLeadPhone(lead.phone);
+                  const booked =
+                    bookedLeads[lead.id] ||
+                    (lead.bookedAt ? formatReadableDateTime(lead.bookedAt) : null);
+                  return (
+                    <tr key={lead.id} className="align-top hover:bg-navy-50/60">
+                      <td className="px-4 py-3 max-w-[260px]">
+                        <div className="font-medium text-navy-900">
+                          {lead.reason || "New caller"}
+                        </div>
+                        {(hasValue(lead.name) || lead.company) && (
+                          <div className="text-xs text-ink-500 mt-0.5">
+                            {hasValue(lead.name) ? lead.name : ""}
+                            {lead.company
+                              ? `${hasValue(lead.name) ? " · " : ""}${lead.company}`
+                              : ""}
+                          </div>
+                        )}
+                        {lead.visitTime && (
+                          <div className="text-xs text-ink-400 mt-1">
+                            Wants: {lead.visitTime}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        {phone && <div className="text-ink-700">{phone}</div>}
+                        {lead.email && (
+                          <div className="text-xs text-ink-500 truncate max-w-[200px]">
+                            {lead.email}
+                          </div>
+                        )}
+                        {phone && (
+                          <div className="flex gap-3 mt-1">
+                            <a
+                              href={telHref(phone)}
+                              className="text-xs font-semibold text-accent-700 hover:text-accent-800"
+                            >
+                              Call
+                            </a>
+                            <a
+                              href={smsHref(phone)}
+                              className="text-xs font-semibold text-accent-700 hover:text-accent-800"
+                            >
+                              Text
+                            </a>
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-ink-600">
+                        {lead.agentName || ""}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-ink-600 whitespace-nowrap">
+                        {lead.createdAt || ""}
+                      </td>
+                      <td className="px-4 py-3">
+                        {booked && (
+                          <div className="mb-1.5">
+                            <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                              ✓ Booked
+                            </span>
+                            <div className="text-xs text-ink-400 mt-0.5">{booked}</div>
+                          </div>
+                        )}
+                        <label className="sr-only" htmlFor={`status-${lead.id}`}>
+                          Update status
+                        </label>
+                        <select
+                          id={`status-${lead.id}`}
+                          value={status}
+                          disabled={savingStatusId === lead.id}
+                          onChange={(e) => handleStatusChange(lead, e.target.value)}
+                          className={`rounded-lg border px-2 py-1 text-xs font-semibold capitalize focus:border-accent-600 focus:outline-none focus:ring-2 focus:ring-accent-600/20 disabled:opacity-50 ${
+                            STATUS_STYLES[status] || STATUS_STYLES.new
+                          }`}
+                        >
+                          {STATUS_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex flex-wrap items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setBookingLead(lead)}
+                            className="rounded-lg bg-accent-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-accent-700"
+                          >
+                            {booked ? "Book again" : "Book"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(lead.id)}
+                            disabled={deletingId === lead.id}
+                            className="rounded-lg border border-accent-600/30 px-3 py-1.5 text-xs font-semibold text-accent-700 hover:bg-accent-600/10 disabled:opacity-50"
+                          >
+                            {deletingId === lead.id ? "Deleting..." : "Delete"}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {bookingLead && (
