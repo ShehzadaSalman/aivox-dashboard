@@ -1,7 +1,7 @@
 export const DEFAULT_CAL_CONFIG = {
   namespace: "30min",
-  calLink: "aivox-agency/30min",
-  eventTypeId: "3139330",
+  calLink: "",
+  eventTypeId: "",
   timeZone: "",
   autoCreateAppointments: false,
   layout: "month_view",
