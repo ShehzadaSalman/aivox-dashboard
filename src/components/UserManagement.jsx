@@ -766,6 +766,7 @@ function AgentAssignmentModal({ user, onClose }) {
                 {filteredAgents.map((agent) => {
                   const isAssigned = assignedIds.has(agent.agent_id);
                   const isSaving = savingId === agent.agent_id;
+                  const limitReached = !isAssigned && assignedIds.size >= 1;
                   return (
                     <tr key={agent.agent_id} className="hover:bg-navy-50">
                       <td className="px-4 py-3">
@@ -781,7 +782,8 @@ function AgentAssignmentModal({ user, onClose }) {
                         <button
                           type="button"
                           onClick={() => handleToggle(agent.agent_id)}
-                          disabled={isSaving}
+                          disabled={isSaving || limitReached}
+                          title={limitReached ? 'Unassign the current agent first — a user can only have one agent.' : undefined}
                           className={`px-3 py-1 rounded-lg border text-sm ${
                             isAssigned
                               ? 'border-accent-600 bg-accent-600 text-white hover:bg-accent-700'
