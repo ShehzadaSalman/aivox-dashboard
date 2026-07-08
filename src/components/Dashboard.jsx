@@ -35,7 +35,7 @@ function Dashboard() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [planName, setPlanName] = useState(null);
+  const [plan, setPlan] = useState(null);
   const userMenuRef = useRef(null);
 
   useEffect(() => {
@@ -44,18 +44,20 @@ function Dashboard() {
       .getPlanUsage()
       .then((response) => {
         if (isMounted) {
-          setPlanName(response?.data?.plan?.name || null);
+          setPlan(response?.data?.plan || null);
         }
       })
       .catch(() => {
         if (isMounted) {
-          setPlanName(null);
+          setPlan(null);
         }
       });
     return () => {
       isMounted = false;
     };
   }, []);
+
+  const isTrialPlan = plan?.code === "TRIAL";
 
   const navLinks = [
     { path: "/dashboard", label: "Overview", Icon: LayoutDashboard },
@@ -112,9 +114,15 @@ function Dashboard() {
               {mobileOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
             <img src="/candibly-vertical-logo.png" alt="AI Vox Agency" className="h-12" />
-            {planName && (
-              <span className="hidden sm:inline-flex items-center rounded-full border border-accent-600/20 bg-accent-600/10 px-3 py-1 text-xs font-semibold text-accent-700">
-                {planName} plan
+            {plan?.name && (
+              <span
+                className={`hidden sm:inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${
+                  isTrialPlan
+                    ? "border-gold-500/30 bg-gold-500/15 text-gold-700"
+                    : "border-accent-600/20 bg-accent-600/10 text-accent-700"
+                }`}
+              >
+                {isTrialPlan ? "Free Trial" : `${plan.name} plan`}
               </span>
             )}
           </div>

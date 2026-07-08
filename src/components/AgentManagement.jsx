@@ -267,7 +267,7 @@ function AgentsEmptyState({ isAdmin, hasSearch, search, onSync, syncing }) {
           goes live.
         </p>
         <Link
-          to="/dashboard/profile"
+          to="/dashboard/settings"
           className="mt-3 inline-flex rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white hover:bg-accent-700"
         >
           Connect your calendar

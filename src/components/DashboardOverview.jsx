@@ -117,7 +117,7 @@ function DashboardOverview() {
       label: 'Connect your calendar',
       done: Boolean(calIntegration?.hasApiKey),
       hint: 'Let callers book straight into your calendar.',
-      to: '/dashboard/profile',
+      to: '/dashboard/settings',
       cta: 'Connect',
     },
     {
